@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <base target="_top">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>(STAGE ENV)QBG Tags Excel Maker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+        }
+
+        button {
+            position: relative;
+            min-height: 30px;
+            min-width: 100px;
+            margin: 0 25px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+            outline: none;
+            cursor: pointer;
+            background: #0d0d0d;
+            overflow: hidden;
+            transition: 0.25s;
+            color: #ffffff;
+            border-color: #00ff40a8;
+            padding: 5px 10px;
+        }
+
+        button:before,
+        button:after {
+            position: absolute;
+            content: '';
+            left: 0;
+            top: 0;
+            height: 100%;
+            filter: blur(30px);
+            opacity: 0.4;
+            transition: 0.6s;
+        }
+
+        button:before {
+            width: 30px;
+            background: rgba(255, 255, 255, 0.6);
+            transform: translateX(-130px) skewX(-45deg);
+        }
+
+        button:after {
+            width: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            transform: translateX(-130px) skewX(-45deg);
+        }
+
+        button:hover:before,
+        button:hover:after {
+            opacity: 0.6;
+            transform: translateX(320px) skewX(-45deg);
+        }
+
+        button:hover {
+            color: #ffffff;
+            background: #009619;
+        }
+
+
+
+        .row.hidden {
+            display: none;
+        }
+
+        .ground {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .row {
+            width: fit-content;
+            min-width: 95%;
+            height: fit-content;
+            margin-top: 10px;
+            padding: 0px 10px 0 10px;
+            background-color: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            border-radius: 8px;
+            transition: all 0.3s ease-out;
+        }
+
+        .request-row {
+            width: fit-content;
+            width: 95%;
+            height: fit-content;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .request-row span {
+            margin: 1px 10px;
+            background-color: white;
+            color: black;
+            padding: 2px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .request-row .values {
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .row-number {
+            color: #f2f2f2;
+            margin: 10px;
+        }
+
+        select {
+            margin: 10px;
+            min-width: 10%;
+            max-width: 200px;
+            padding: 5px 10px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .requestwindow {
+            background-color: rgb(80, 80, 80);
+            position: absolute;
+            width: 90%;
+            color: white;
+            text-align: center;
+            transform: translateY(100px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 20px;
+            border-radius: 10px;
+            z-index: 999;
+        }
+
+        .request-window-header {
+            padding: 10px;
+            margin: 20px;
+            background-color: rgb(53, 53, 53);
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .admin-login-window-header {
+            padding: 10px;
+            margin: 20px;
+            background-color: rgb(53, 53, 53);
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .admin-login-window {
+            background-color: rgb(80, 80, 80);
+            position: absolute;
+            width: 90%;
+            color: white;
+            text-align: center;
+            transform: translateY(100px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 20px;
+            border-radius: 10px;
+            z-index: 999;
+        }
+
+        input {
+            min-height: 20px;
+            padding: 5px 10px;
+            margin: 10px;
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        .overlay {
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff80;
+            position: absolute;
+            z-index: 99;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        button.request-approved {
+            color: green;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        button.request-rejected {
+            color: red;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .request-row.acted {
+            opacity: 0.5;
+        }
+
+        .request-row.acted span {
+            font-size: 11px;
+        }
+
+        .select-label {
+            color: white;
+            font-size: 12px;
+            position: absolute;
+            transform: translate(10px, -10px);
+        }
+
+        .request-count {
+            color: white;
+            font-size: 20px;
+        }
+
+        #filename-box {
+            width: 40%;
+            min-width: 10px;
+            color: #ffffff;
+            padding: 5px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #filename-inactive {
+            color: white;
+            min-width: 37px;
+            min-height: 10px;
+            cursor: text;
+            /* height: 62px; */
+            display: block;
+        }
+
+        #filename-active {
+            outline: none;
+
+            font-size: 18px;
+            margin: 0;
+            border-radius: 5px;
+            background-color: rgb(67, 67, 67);
+            padding: 0px 5px;
+            color: white;
+            border: none;
+            border-bottom: 2px solid #00ff44;
+
+        }
+
+        .header-buttons {
+            width: 60%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .filename {
+            font-size: 22px;
+        }
+
+        .filename-extension {
+            background-color: #007d0f;
+            border-radius: 6px;
+            padding: 0 5px;
+            margin-left: 3px;
+        }
+
+        .button-disabled {
+            opacity: 0.5 !important;
+            pointer-events: none !important;
+        }
+
+        .no-row-text-box {
+            width: 100%;
+            text-align: center;
+            margin: 100px;
+            font-size: 35px;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            opacity: 0.5;
+            pointer-events: none !important;
+            user-select: none;
+        }
+
+        .no-row-text {
+            width: 100%;
+            margin: 20px;
+        }
+
+        .demo-button {
+            margin: 0;
+            pointer-events: none;
+            transform: translate(0, -7px);
+        }
+
+        .request-count-span {
+            color: #ffffff;
+            border-radius: 8px;
+            margin: 0 10px;
+            padding: 2px 10px;
+            opacity: 0.5;
+        }
+
+        .request-count-span.approved {
+            background-color: #027402;
+        }
+
+        .request-count-span.rejected {
+            background-color: red;
+        }
+
+        .request-count-span.pending {
+            background-color: rgb(0, 55, 255);
+        }
+
+        .header {
+            height: fit-content;
+            padding: 5px 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            background-color: rgb(80, 80, 80);
+            width: 95%;
+            /* position: sticky;
+            top: 0; */
+            /* border-radius: 50px; */
+        }
+
+        .delete-row-button {
+            filter: invert(1);
+            width: 35px;
+            margin-left: 20px;
+            cursor: pointer;
+        }
+
+        .delete-row-button:hover {
+            fill: rgb(0, 255, 238);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .add-row-footer {
+            background-color: black;
+            color: white;
+            font-size: 15px;
+            height: fit-content;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 95%;
+            margin-top: 5px;
+        }
+
+        .add-row-input {
+            width: 60px;
+            outline: none;
+            color: white;
+            background-color: rgb(67, 67, 67);
+            border: none;
+            border-bottom: 2px solid #00ff44;
+
+            margin: 0;
+        }
+
+        .footer-button {
+            margin: 0 10px;
+            padding: 2px 10px;
+            cursor: pointer;
+            border-radius: 15px;
+            color: #00ff44;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .footer-button:hover {
+            background-color: #003c96;
+        }
+
+        .footer-section {
+            border: 2px solid #00ff4459;
+            padding: 3px 10px;
+            min-width: 150px;
+            min-height: 45px;
+            margin: 3px 7px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        #add-row-section-demo {
+            pointer-events: none;
+            width: 205px;
+            font-size: 15px;
+            display: inline-flex;
+            transform: translate(-3px, -6px);
+        }
+
+        .error-text-footer {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body style="margin: 0;padding: 0;background-color: rgb(53, 53, 53);min-height: 100vh;">
+    <div class="overlay hidden"></div>
+    <!-- <div class="stage">*STAGE ENV</div> -->
+    <div class="ground" style="min-width: 100vw;">
+        <div class="requestwindow hidden">
+            <span class="request-window-header">Request New Tag</span>
+            <div class="request-dropdowns">
+                <input type="text" placeholder="type your name" class="request-owner-value">
+                <input type="text" placeholder="type your mail address" class="request-email-value">
+                <select name="" id="" class="request-type-value" onchange="requestTypeSelected(this)">
+                    <option value="" selected hidden>--Select Type--</option>
+                    <option value="category">Category</option>
+                    <option value="subject">Subject</option>
+                    <option value="chapter">Chapter</option>
+                    <option value="topic">Topic</option>
+                    <option value="subtopic">Subtopic</option>
+                </select>
+                <div class="inputs">
+
+                    <select name="" id="" class="category hidden" onchange="setRequestDropdown('subject')">
+                        <option value="" selected hidden>--Select Category--</option>
+                    </select>
+                    <select name="" id="" class="subject hidden" onchange="setRequestDropdown('chapter')">
+                        <option value="" selected hidden>--Select Subject--</option>
+                    </select>
+                    <select name="" id="" class="chapter hidden" onchange="setRequestDropdown('topic')">
+                        <option value="" selected hidden>--Select Chapter--</option>
+                    </select>
+                    <select name="" id="" class="topic hidden">
+                        <option value="" selected hidden>--Select Topic--</option>
+                    </select>
+                    <input type="text" placeholder="type a name" class="request-name-value hidden">
+
+                </div>
+
+                <button onclick="submitRequestedTags(this)">Submit</button>
+                <button onclick="closeRequestWindow()">Close</button>
+            </div>
+        </div>
+        <div class="admin-login-window hidden">
+            <span class="admin-login-window-header">Please enter login details</span>
+            <div class="login-inputs">
+                <input type="text" placeholder="Username" class="admin-login-username-value">
+                <input type="password" placeholder="Password" class="admin-login-password-value">
+                <button onclick="submitLoginDetails(this)">Login</button>
+                <button onclick="closeAdminLoginWindow()">Close</button>
+            </div>
+        </div>
+        <div class="header">
+            <span class="request-count hidden"></span>
+            <div id="filename-box">
+                <span class="filename" id="filename-inactive" onclick="activeFileName(event)">Untitled Tag Sheet<span
+                        class="filename-extension">.XLSX</span></span>
+                <input class="filename hidden" placeholder="type file name..." type="text"
+                    oninput="fileNameChange(this)" id="filename-active">
+            </div>
+            <div class="header-buttons">
+                <button class="login-button" onclick="adminLogin()">Admin Login</button>
+                <button class="logout-button hidden" onclick="logout()">Log out</button>
+                <button class="request-tag-button non-admin-button" onclick="requestNewTag()">Request New Tag</button>
+                <button class="export-button non-admin-button" onclick="exportasexcel()">Export</button>
+                <button class="add-row-button non-admin-button" onclick="addrow()">+Add Row</button>
+                <span style="color: white;font-size: 25px;">*Stage Env</span>
+            </div>
+
+        </div>
+        <div class="row hidden" style="opacity: 0;">
+            <span class="row-number">SN: 1</span>
+            <div class="category-select-container select-container">
+                <label class="select-label">Category</label>
+                <select name="" id="category" class="category-select" onchange="fetchSubjects(this)" disabled>
+                    <option value="--select--" selected hidden>--select--</option>
+                </select>
+            </div>
+            <div class="subject-select-container select-container">
+                <label class="select-label">Subject</label>
+                <select name="" id="subject" class="subject-select" onchange="fetchChapters(this)" disabled>
+                    <option value="--select--" selected hidden>--select--</option>
+
+                </select>
+            </div>
+            <div class="chapter-select-container select-container">
+                <label class="select-label">Chapter</label>
+
+                <select name="" id="chapter" class="chapter-select" onchange="fetchTopics(this)" disabled>
+                    <option value="--select--" selected hidden>--select--</option>
+
+                </select>
+            </div>
+            <div class="topic-select-container select-container">
+                <label class="select-label">Topic</label>
+
+                <select name="" id="topic" class="topic-select" onchange="fetchSubtopics(this)" disabled>
+                    <option value="--select--" selected hidden>--select--</option>
+
+                </select>
+            </div>
+            <div class="subtopic-select-container select-container">
+                <label class="select-label">Subtopic</label>
+
+                <select name="" id="subtopic" class="subtopic-select" onchange="saveState(this)" disabled>
+                    <option value="--select--" selected hidden>--select--</option>
+
+                </select>
+            </div>
+            <svg class="delete-row-button" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="80" height="80"
+                viewBox="0 0 80 80">
+                <path
+                    d="M 37 6 C 35.35503 6 34 7.3550302 34 9 L 34 10 L 24.472656 10 C 22.580979 10 20.84645 11.07202 20 12.763672 L 18.882812 15 L 15.5 15 C 13.578812 15 12 16.578812 12 18.5 C 12 20.421188 13.578812 22 15.5 22 L 16.080078 22 L 19.697266 65.416016 C 19.912759 67.998204 22.089668 70 24.681641 70 L 55.320312 70 C 57.91153 70 60.087241 67.998204 60.302734 65.416016 L 63.919922 22 L 64.5 22 C 66.421188 22 68 20.421188 68 18.5 C 68 16.578812 66.421188 15 64.5 15 L 61.117188 15 L 60 12.763672 C 59.15355 11.07202 57.419021 10 55.527344 10 L 46 10 L 46 9 C 46 7.3550302 44.64497 6 43 6 L 37 6 z M 37 8 L 43 8 C 43.56503 8 44 8.4349698 44 9 L 44 10 L 36 10 L 36 9 C 36 8.4349698 36.43497 8 37 8 z M 24.472656 12 L 34.832031 12 A 1.0001 1.0001 0 0 0 35.158203 12 L 44.832031 12 A 1.0001 1.0001 0 0 0 45.158203 12 L 55.527344 12 C 56.665666 12 57.701388 12.639855 58.210938 13.658203 L 59.882812 17 L 64.5 17 C 65.340812 17 66 17.659188 66 18.5 C 66 19.340812 65.340812 20 64.5 20 L 64.085938 20 L 15.914062 20 L 15.5 20 C 14.659188 20 14 19.340812 14 18.5 C 14 17.659188 14.659188 17 15.5 17 L 20.117188 17 L 21.789062 13.658203 C 22.298613 12.639855 23.334334 12 24.472656 12 z M 24 15 A 1 1 0 0 0 23 16 A 1 1 0 0 0 24 17 A 1 1 0 0 0 25 16 A 1 1 0 0 0 24 15 z M 28 15 A 1 1 0 0 0 27 16 A 1 1 0 0 0 28 17 A 1 1 0 0 0 29 16 A 1 1 0 0 0 28 15 z M 32 15 A 1 1 0 0 0 31 16 A 1 1 0 0 0 32 17 A 1 1 0 0 0 33 16 A 1 1 0 0 0 32 15 z M 36 15 A 1 1 0 0 0 35 16 A 1 1 0 0 0 36 17 A 1 1 0 0 0 37 16 A 1 1 0 0 0 36 15 z M 40 15 A 1 1 0 0 0 39 16 A 1 1 0 0 0 40 17 A 1 1 0 0 0 41 16 A 1 1 0 0 0 40 15 z M 44 15 A 1 1 0 0 0 43 16 A 1 1 0 0 0 44 17 A 1 1 0 0 0 45 16 A 1 1 0 0 0 44 15 z M 48 15 A 1 1 0 0 0 47 16 A 1 1 0 0 0 48 17 A 1 1 0 0 0 49 16 A 1 1 0 0 0 48 15 z M 52 15 A 1 1 0 0 0 51 16 A 1 1 0 0 0 52 17 A 1 1 0 0 0 53 16 A 1 1 0 0 0 52 15 z M 56 15 A 1 1 0 0 0 55 16 A 1 1 0 0 0 56 17 A 1 1 0 0 0 57 16 A 1 1 0 0 0 56 15 z M 18.085938 22 L 61.914062 22 L 58.308594 65.248047 C 58.178088 66.811858 56.889095 68 55.320312 68 L 24.681641 68 C 23.111613 68 21.821912 66.811858 21.691406 65.248047 L 18.085938 22 z M 54.769531 26.027344 L 54.082031 26.603516 L 54.001953 26.945312 L 53.996094 27.044922 L 54.353516 27.867188 L 55.226562 28.072266 L 55.912109 27.496094 L 55.992188 27.154297 L 55.998047 27.054688 L 55.640625 26.232422 L 54.769531 26.027344 z M 39.716797 26.041016 L 39.0625 26.652344 L 39 27 L 39 27.099609 L 39.402344 27.900391 L 40.283203 28.058594 L 40.9375 27.447266 L 41 27.099609 L 41 27 L 40.597656 26.199219 L 39.716797 26.041016 z M 24.666016 26.058594 L 24.044922 26.705078 L 24.001953 27.054688 L 24.007812 27.154297 L 24.451172 27.931641 L 25.339844 28.042969 L 25.960938 27.396484 L 26.003906 27.044922 L 25.998047 26.945312 L 25.554688 26.167969 L 24.666016 26.058594 z M 54.546875 30.121094 L 53.861328 30.697266 L 53.779297 31.041016 L 53.775391 31.140625 L 54.132812 31.960938 L 55.003906 32.166016 L 55.691406 31.591797 L 55.771484 31.248047 L 55.777344 31.148438 L 55.419922 30.326172 L 54.546875 30.121094 z M 39.716797 30.140625 L 39.0625 30.753906 L 39 31.099609 L 39 31.199219 L 39.402344 32.001953 L 40.283203 32.158203 L 40.9375 31.546875 L 41 31.199219 L 41 31.099609 L 40.597656 30.298828 L 39.716797 30.140625 z M 24.886719 30.152344 L 24.265625 30.798828 L 24.222656 31.148438 L 24.228516 31.248047 L 24.671875 32.025391 L 25.560547 32.136719 L 26.181641 31.490234 L 26.224609 31.140625 L 26.220703 31.041016 L 25.775391 30.261719 L 24.886719 30.152344 z M 54.326172 34.214844 L 53.638672 34.791016 L 53.558594 35.134766 L 53.552734 35.234375 L 53.910156 36.054688 L 54.783203 36.261719 L 55.470703 35.685547 L 55.550781 35.341797 L 55.556641 35.242188 L 55.199219 34.419922 L 54.326172 34.214844 z M 39.716797 34.240234 L 39.0625 34.853516 L 39 35.199219 L 39 35.300781 L 39.402344 36.101562 L 40.283203 36.259766 L 40.9375 35.646484 L 41 35.300781 L 41 35.199219 L 40.597656 34.398438 L 39.716797 34.240234 z M 25.107422 34.246094 L 24.488281 34.892578 L 24.443359 35.242188 L 24.449219 35.341797 L 24.892578 36.119141 L 25.783203 36.230469 L 26.402344 35.583984 L 26.447266 35.234375 L 26.441406 35.134766 L 25.996094 34.355469 L 25.107422 34.246094 z M 54.105469 38.308594 L 53.417969 38.884766 L 53.337891 39.228516 L 53.332031 39.328125 L 53.689453 40.150391 L 54.5625 40.355469 L 55.248047 39.779297 L 55.330078 39.435547 L 55.333984 39.335938 L 54.976562 38.513672 L 54.105469 38.308594 z M 25.328125 38.339844 L 24.708984 38.986328 L 24.666016 39.335938 L 24.669922 39.435547 L 25.115234 40.214844 L 26.003906 40.324219 L 26.625 39.677734 L 26.667969 39.328125 L 26.662109 39.228516 L 26.21875 38.449219 L 25.328125 38.339844 z M 39.716797 38.341797 L 39.0625 38.953125 L 39 39.300781 L 39 39.400391 L 39.402344 40.201172 L 40.283203 40.359375 L 40.9375 39.746094 L 41 39.400391 L 41 39.300781 L 40.597656 38.498047 L 39.716797 38.341797 z M 53.882812 42.402344 L 53.197266 42.978516 L 53.117188 43.322266 L 53.111328 43.421875 L 53.46875 44.244141 L 54.339844 44.449219 L 55.027344 43.873047 L 55.107422 43.529297 L 55.113281 43.429688 L 54.755859 42.609375 L 53.882812 42.402344 z M 25.550781 42.433594 L 24.929688 43.080078 L 24.886719 43.429688 L 24.892578 43.529297 L 25.335938 44.308594 L 26.224609 44.417969 L 26.845703 43.771484 L 26.888672 43.421875 L 26.882812 43.322266 L 26.439453 42.542969 L 25.550781 42.433594 z M 39.716797 42.441406 L 39.0625 43.052734 L 39 43.400391 L 39 43.5 L 39.402344 44.300781 L 40.283203 44.458984 L 40.9375 43.847656 L 41 43.5 L 41 43.400391 L 40.597656 42.599609 L 39.716797 42.441406 z M 53.662109 46.498047 L 52.976562 47.072266 L 52.894531 47.416016 L 52.888672 47.515625 L 53.248047 48.337891 L 54.119141 48.542969 L 54.806641 47.966797 L 54.886719 47.623047 L 54.892578 47.523438 L 54.535156 46.703125 L 53.662109 46.498047 z M 25.771484 46.527344 L 25.150391 47.173828 L 25.107422 47.523438 L 25.113281 47.623047 L 25.556641 48.402344 L 26.447266 48.511719 L 27.066406 47.865234 L 27.111328 47.515625 L 27.105469 47.416016 L 26.660156 46.638672 L 25.771484 46.527344 z M 39.716797 46.541016 L 39.0625 47.152344 L 39 47.5 L 39 47.599609 L 39.402344 48.400391 L 40.283203 48.558594 L 40.9375 47.947266 L 41 47.599609 L 41 47.5 L 40.597656 46.699219 L 39.716797 46.541016 z M 53.441406 50.591797 L 52.753906 51.167969 L 52.673828 51.509766 L 52.667969 51.609375 L 53.025391 52.431641 L 53.898438 52.636719 L 54.583984 52.060547 L 54.666016 51.71875 L 54.669922 51.617188 L 54.3125 50.796875 L 53.441406 50.591797 z M 25.992188 50.621094 L 25.373047 51.267578 L 25.330078 51.617188 L 25.333984 51.71875 L 25.779297 52.496094 L 26.667969 52.605469 L 27.289062 51.958984 L 27.332031 51.609375 L 27.326172 51.509766 L 26.882812 50.732422 L 25.992188 50.621094 z M 39.716797 50.640625 L 39.0625 51.253906 L 39 51.599609 L 39 51.699219 L 39.402344 52.501953 L 40.283203 52.658203 L 40.9375 52.046875 L 41 51.699219 L 41 51.599609 L 40.597656 50.798828 L 39.716797 50.640625 z M 53.21875 54.685547 L 52.533203 55.261719 L 52.453125 55.603516 L 52.447266 55.703125 L 52.804688 56.525391 L 53.677734 56.730469 L 54.363281 56.154297 L 54.443359 55.8125 L 54.449219 55.712891 L 54.091797 54.890625 L 53.21875 54.685547 z M 26.214844 54.716797 L 25.59375 55.363281 L 25.550781 55.712891 L 25.556641 55.8125 L 26 56.589844 L 26.888672 56.701172 L 27.509766 56.054688 L 27.552734 55.703125 L 27.546875 55.603516 L 27.103516 54.826172 L 26.214844 54.716797 z M 39.716797 54.740234 L 39.0625 55.353516 L 39 55.699219 L 39 55.800781 L 39.402344 56.601562 L 40.283203 56.759766 L 40.9375 56.146484 L 41 55.800781 L 41 55.699219 L 40.597656 54.898438 L 39.716797 54.740234 z M 52.998047 58.779297 L 52.3125 59.355469 L 52.230469 59.697266 L 52.226562 59.798828 L 52.583984 60.619141 L 53.455078 60.824219 L 54.142578 60.25 L 54.222656 59.90625 L 54.228516 59.806641 L 53.871094 58.984375 L 52.998047 58.779297 z M 26.435547 58.810547 L 25.814453 59.457031 L 25.771484 59.806641 L 25.777344 59.90625 L 26.220703 60.683594 L 27.111328 60.794922 L 27.730469 60.148438 L 27.773438 59.798828 L 27.769531 59.697266 L 27.324219 58.919922 L 26.435547 58.810547 z M 39.716797 58.841797 L 39.0625 59.453125 L 39 59.800781 L 39 59.900391 L 39.402344 60.701172 L 40.283203 60.859375 L 40.9375 60.246094 L 41 59.900391 L 41 59.800781 L 40.597656 58.998047 L 39.716797 58.841797 z M 52.777344 62.873047 L 52.089844 63.449219 L 52.009766 63.792969 L 52.003906 63.892578 L 52.361328 64.712891 L 53.234375 64.919922 L 53.919922 64.34375 L 54.001953 64 L 54.007812 63.900391 L 53.648438 63.078125 L 52.777344 62.873047 z M 26.65625 62.904297 L 26.037109 63.550781 L 25.992188 63.900391 L 25.998047 64 L 26.443359 64.777344 L 27.332031 64.888672 L 27.953125 64.242188 L 27.996094 63.892578 L 27.990234 63.792969 L 27.546875 63.013672 L 26.65625 62.904297 z M 39.716797 62.941406 L 39.0625 63.552734 L 39 63.900391 L 39 64 L 39.402344 64.800781 L 40.283203 64.958984 L 40.9375 64.347656 L 41 64 L 41 63.900391 L 40.597656 63.099609 L 39.716797 62.941406 z">
+                </path>
+            </svg>
+        </div>
+        <div class="add-row-footer">
+            <div class="add-row-section footer-section">
+                <span class="add-row-text"><span class="add-row-button-2 footer-button"
+                        onclick="addRowMulti(this)">Add</span> <input oninput="onInputAddRow(this)"
+                        class="add-row-input" type="text"> Rows</span>
+            </div>
+            <div class="export-button-section button-disabled footer-section">
+                <span class="export-button-2 footer-button" onclick="exportasexcel()">Export</span>
+                <span class="export-rows-count-2"></span>
+            </div>
+            <div class="clear-all-section button-disabled footer-section">
+                <span class="clear-all-button footer-button" onclick="clearAll(this)">Clear All</span>
+                <span style="cursor: pointer;" class="close-undo hidden" onclick="closeUndo()">&#10060;</span>
+            </div>
+            <span class="error-text-footer hidden">Oops... please enter a number.</span>
+        </div>
+        <div class="no-row-text-box">
+            <span class="no-row-text">
+                Add row by clicking
+                <button class="add-row-button-demo demo-button non-admin-button">+Add Row</button> button to
+                start tagging.
+            </span>
+            <span class="no-row-text">
+                Export rows by clicking
+                <button class="add-row-button-demo demo-button non-admin-button">Export</button> button.
+            </span>
+            <span class="no-row-text">
+                Use <div class="add-row-section footer-section" id="add-row-section-demo">
+                    <span class="add-row-text"><span class="add-row-button-2 footer-button"
+                            onclick="addRowMulti()">Add</span> <input class="add-row-input add-row-input-demo"
+                            type="text"> Rows</span>
+                </div> to add multiple rows with single click.
+            </span>
+        </div>
+
+        <div class="request-row hidden">
+            <div class="values" style="width:60%;">
+                <span class="request-owner"></span>
+                <span class="request-email"></span>
+                <span class="request-type" style="color:#953f00;"></span>
+                <span class="request-name" style="color:#953f00;"></span>
+                <span class="request-category"></span>
+                <span class="request-subject"></span>
+                <span class="request-chapter"></span>
+                <span class="request-topic"></span>
+            </div>
+            <button class="small approve-request-button" onclick="actRequest(this,'approved')">Approve</button>
+            <button class="small reject-request-button" onclick="actRequest(this,'rejected')">Reject</button>
+        </div>
+
+    </div>
+</body>
+<script>
+
+    const qbgBaseURL = `https://qbg-backend-stage.penpencil.co`;
+    const backendBaseURL = `https://www.api-pw-internal-utilities.in`
+    // const backendBaseURL = `http://localhost:8080`
+    function fetchReq(url) {
+        return new Promise((resolve, reject) => {
+            fetch(`${backendBaseURL}/qbgtags?url=${encodeURI(url)}`).then(response => {
+
+                response.json().then(json => {
+
+                    resolve(json)
+                })
+            })
+        })
+    }
+    let rows = 0;
+    const row = document.querySelector('.row');
+    const ground = document.querySelector('.ground');
+    const footer = document.querySelector(".add-row-footer");
+
+    const noRowTextBox = document.querySelector(".no-row-text-box");
+    const exportButton = document.querySelector(".export-button");
+    const exportButtonSection = document.querySelector(".export-button-section");
+    const clearAllButtonSection = document.querySelector(".clear-all-section");
+    const exportButton2RowCount = document.querySelector(".export-rows-count-2");
+    const addRowButton = document.querySelector(".add-row-button");
+    const errorTextFooter = document.querySelector(".error-text-footer")
+    exportButton.classList.add("button-disabled");
+    exportButtonSection.classList.add("button-disabled");
+    clearAllButtonSection.classList.add("button-disabled");
+
+    const addRowInput = document.querySelector(".add-row-input");
+    addRowInput.value = localStorage.getItem('add_row_input_value') || 10;
+
+    function addrow(selectedValues) {
+        if (rows >= 500) {
+            showFooterError(`Maximum 500 rows allowed for smooth performance.`)
+            return;
+        }
+        noRowTextBox.classList.add("hidden");
+        rows++;
+        if (rows >= 500 || rows == 0) {
+            addRowButton.classList.add("button-disabled");
+        } else {
+            addRowButton.classList.remove("button-disabled");
+        }
+        exportButton.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
+        exportButton2RowCount.innerHTML = `${rows} ${rows > 1 ? "Rows" : "Row"}`
+        let rowAll = document.querySelectorAll(".row");
+        exportButton.classList.remove("button-disabled");
+        exportButtonSection.classList.remove("button-disabled");
+        clearAllButtonSection.classList.remove("button-disabled");
+        let dataLastRow = [];
+        if (selectedValues) {
+            dataLastRow = selectedValues
+        } else {
+            rowAll[rowAll.length == 1 ? 0 : rowAll.length - 2].querySelectorAll("select").forEach(select => {
+                dataLastRow.push(select.selectedOptions[0].value || "--select--");
+            });
+        }
+        let newRow;
+        if (rowAll.length > 1) {
+            newRow = rowAll[rowAll.length - 1].cloneNode(true);
+        } else {
+            newRow = row.cloneNode(true);
+        }
+
+        ground.insertBefore(newRow, row);
+        newRow.classList.remove('hidden');
+        newRow.classList.add('row-tagging');
+        newRow.querySelector(".row-number").innerHTML = `SN: ${rows}`;
+        newRow.setAttribute("number", rows)
+        newRow.style.opacity = "0";
+        newRow.querySelector(".delete-row-button").setAttribute("onclick", `deleteRow(${rows})`);
+        let count = -1;
+        newRow.querySelectorAll("select").forEach(select => {
+            count++;
+            select.value = dataLastRow[count];
+            if (dataLastRow[count] != "--select--") {
+                if (select.classList.contains("category-select")) {
+                    fetchSubjects(select)
+                }
+                else if (select.classList.contains("subject-select")) {
+                    fetchChapters(select)
+                }
+                else if (select.classList.contains("chapter-select")) {
+                    fetchTopics(select)
+                }
+                else if (select.classList.contains("topic-select")) {
+                    fetchSubtopics(select)
+                }
+            }
+        })
+        setTimeout(() => {
+            newRow.style.opacity = "1";
+        }, 100);
+    }
+    function addRowMulti(el) {
+        let numRows = parseInt(addRowInput.value);
+        if (!numRows || numRows <= 0) {
+            showFooterError(`Oops... please enter a valid number.`)
+            return;
+        }
+
+        if (rows + numRows > 500) {
+            showFooterError(`Maximum 500 rows allowed for smooth performance.`);
+            return;
+        }
+        for (let x = 0; x < numRows; x++) {
+            addrow()
+        }
+        el.scrollIntoView({ behavior: "smooth" })
+    }
+    let data = [["subject", "chapter", "topic", "subtopic"]];
+    function exportasexcel() {
+        let dataObject = getDataAsObject(true, true);
+        let dataCurrent = [["subject", "chapter", "topic", "subtopic"]];
+        dataObject.forEach(row => {
+            data.push(row)
+            dataCurrent.push(row)
+        })
+        var workbook = XLSX.utils.book_new(),
+            worksheet = XLSX.utils.aoa_to_sheet(dataCurrent);
+        workbook.SheetNames.push("Sheet1");
+        workbook.Sheets["Sheet1"] = worksheet;
+        XLSX.writeFile(workbook, `${document.querySelector("#filename-inactive").innerHTML}.xlsx`);
+    }
+    function deleteRow(rowNumber) {
+        document.querySelector(`.row[number="${rowNumber}"]`).remove();
+        rows--;
+        if (rows >= 500 || rows == 0) {
+            addRowButton.classList.add("button-disabled")
+        } else {
+            addRowButton.classList.remove("button-disabled");
+        }
+        if (rows == 0) {
+            exportButton.innerHTML = `Export`
+            exportButton2RowCount.innerHTML = ``
+            noRowTextBox.classList.remove("hidden");
+            exportButton.classList.add("button-disabled");
+            exportButtonSection.classList.add("button-disabled");
+            clearAllButtonSection.classList.add("button-disabled");
+        } else {
+            exportButton.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
+            exportButton2RowCount.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
+        }
+        let count = 0;
+        document.querySelectorAll('.row-tagging').forEach(el => {
+            count++;
+            el.setAttribute("number", `${count}`);
+            el.querySelector('.delete-row-button').setAttribute("onclick", `deleteRow(${count})`);
+            el.querySelector(".row-number").innerHTML = `SN: ${count}`;
+        });
+        saveState()
+    }
+    function fill() {
+        document.querySelectorAll("select").forEach(select => {
+            let random = Math.floor(Math.random() * 2) + 1
+            select.value = select.querySelectorAll("option")[random].value
+        })
+
+    }
+    function saveState() {
+        localStorage.setItem('data', JSON.stringify(getDataAsObject()));
+    }
+    function getDataAsObject(excludeCategory, id) {
+        let data = []
+        const allrows = document.querySelectorAll(".row-tagging");
+        allrows.forEach(row => {
+            let rowData = [];
+            row.querySelectorAll("select").forEach(select => {
+                if (select.classList.contains("category-select") && excludeCategory) {
+                    return;
+                }
+                let selectedOption = id ? select.selectedOptions[0].id : select.selectedOptions[0].value;
+                rowData.push(selectedOption)
+
+            });
+            data.push(rowData)
+        });
+        return data;
+    }
+
+    function getState() {
+        let data = JSON.parse(localStorage.getItem('data'));
+        data.forEach(row => {
+            addrow(row);
+        })
+    }
+    const overlay = document.querySelector(".overlay");
+    const requestWindow = document.querySelector(".requestwindow");
+    const requestTypeEl = document.querySelector(".request-type-value");
+    const requestNameEl = document.querySelector(".request-name-value");
+    const requestOwnerEl = document.querySelector(".request-owner-value");
+    const requestEmailEl = document.querySelector(".request-email-value");
+    const filenameBox = document.querySelector("#filename-box")
+    const adminLoginWindowEl = document.querySelector(".admin-login-window");
+    function requestNewTag() {
+        overlay.classList.remove("hidden")
+        requestWindow.classList.remove("hidden")
+    }
+    function adminLogin() {
+        overlay.classList.remove("hidden")
+        adminLoginWindowEl.classList.remove("hidden");
+        noRowTextBox.classList.add("hidden");
+        filenameBox.classList.add("hidden")
+    }
+    function closeRequestWindow() {
+        overlay.classList.add("hidden")
+        requestWindow.classList.add("hidden")
+        noRowTextBox.classList.remove("hidden");
+        filenameBox.classList.remove("hidden")
+    }
+    function closeAdminLoginWindow() {
+        overlay.classList.add("hidden")
+        adminLoginWindowEl.classList.add("hidden")
+        noRowTextBox.classList.remove("hidden");
+        filenameBox.classList.remove("hidden")
+    }
+    function submitRequestedTags(el) {
+
+        let type = requestTypeEl.selectedOptions[0].value;
+        let owner = requestOwnerEl.value;
+        let email = requestEmailEl.value;
+        if (!owner || !email) {
+            window.alert("Please fill all inputs");
+            return;
+        }
+        el.innerHTML = `Submitting...`
+        let dropdownValues = [];
+        document.querySelector(".requestwindow").querySelector(".inputs").querySelectorAll("select").forEach(select => {
+            dropdownValues.push([select.selectedOptions[0].id, select.selectedOptions[0].value])
+        })
+        let name = requestNameEl.value;
+        fetch(`${backendBaseURL}/qbgtags/submitrequest`, {
+            headers: {
+                "content-type": "application/json"
+            },
+            method: "POST",
+            body: JSON.stringify([type, name, owner, email, 'stage', dropdownValues])
+        }).then(res => {
+            res.json().then(json => {
+                el.innerHTML = `Submit`;
+                closeRequestWindow()
+            })
+        })
+    }
+    let fetchedData = {};
+    fetchReq(`${qbgBaseURL}/category-configuration`).then(response => {
+
+        categories = response.data;
+
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        let html2 = `<option value="--select--" selected hidden>--Select Category--</option>`;
+        categories.forEach(cat => {
+            html += `<option value="${cat.name}" id="${cat.unique_id}">${cat.name}</option>`;
+            html2 += `<option value="${cat.name}" id="${cat.unique_id}">${cat.name}</option>`;
+        });
+        document.querySelectorAll(".category-select").forEach(el => {
+            el.removeAttribute('disabled');
+            el.innerHTML = html;
+        });
+        document.querySelector(".requestwindow").querySelector(".category").innerHTML = html2;
+
+    });
+    let categoryIdCurrentRow;
+    function fetchSubjects(el) {
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+        let categoryId = el.selectedOptions[0].id;
+        categoryIdCurrentRow = categoryId;
+        let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".subject-select");
+        resetDropdowns(rowNumber, ["subject", "chapter", "topic", "subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[categoryId]) {
+            fetchedData[categoryId].forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/subjects/v2?category_id=${categoryId}`).then(res => {
+
+            fetchedData[categoryId] = res.data;
+            let subjects = res.data;
+            subjects.sort(compare);
+            subjects.forEach(subject => {
+                html += `<option value="${subject.english_name}" id="${subject.unique_id}">${subject.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+    function fetchChapters(el) {
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+
+        let subjectId = el.selectedOptions[0].id;
+        let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".chapter-select");
+
+        resetDropdowns(rowNumber, ["chapter", "topic", "subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[subjectId]) {
+            fetchedData[subjectId].forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/chapters/v2?subject_id=${subjectId}&category_id=${categoryIdCurrentRow}`).then(res => {
+
+
+            fetchedData[subjectId] = res.data;
+            let chapters = res.data;
+            chapters.sort(compare);
+            chapters.forEach(ch => {
+                html += `<option value="${ch.english_name}" id="${ch.unique_id}">${ch.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+    function fetchTopics(el) {
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+
+        let chapterId = el.selectedOptions[0].id;
+        let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".topic-select");
+
+        resetDropdowns(rowNumber, ["topic", "subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[chapterId]) {
+            fetchedData[chapterId].forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/topics/v2?chapter_id=${chapterId}&category_id=${categoryIdCurrentRow}`).then(res => {
+
+
+            fetchedData[chapterId] = res.data;
+            let topics = res.data;
+            topics.sort(compare);
+            topics.forEach(topic => {
+                html += `<option value="${topic.english_name}" id="${topic.unique_id}">${topic.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+    function fetchSubtopics(el) {
+
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+
+        let topicId = el.selectedOptions[0].id;
+        let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".subtopic-select");
+
+        resetDropdowns(rowNumber, ["subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[topicId]) {
+            fetchedData[topicId].forEach(subtopic => {
+                html += `<option value="${subtopic.english_name}" id="${subtopic.unique_id}">${subtopic.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/subtopics/v2?topic_id=${topicId}&category_id=${categoryIdCurrentRow}`).then(res => {
+
+
+            fetchedData[topicId] = res.data;
+            let subtopics = res.data;
+            subtopics.sort(compare);
+            subtopics.forEach(subtopic => {
+                html += `<option value="${subtopic.english_name}" id="${subtopic.unique_id}">${subtopic.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+
+    function resetDropdowns(rowNumber, arr) {
+        let row = document.querySelector(`.row[number="${rowNumber}"]`);
+        if (arr.includes("subject")) {
+            row.querySelector(".subject-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+        if (arr.includes("chapter")) {
+            row.querySelector(".chapter-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+        if (arr.includes("topic")) {
+            row.querySelector(".topic-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+        if (arr.includes("subtopic")) {
+
+            row.querySelector(".subtopic-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+    }
+    window.onbeforeunload = function () {
+        if (rows > 0) {
+            return "Data will be lost if you refresh the page, are you sure?";
+        }
+    };
+
+    function requestTypeSelected(el) {
+        let type = el.selectedOptions[0].value;
+        let inputs = document.querySelector(".requestwindow").querySelector(".inputs")
+        let nameInput = inputs.querySelector("input");
+        nameInput.classList.remove("hidden")
+        if (type == "subject") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new subject name")
+        }
+        else if (type == "chapter") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            inputs.querySelector(".subject").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new chapter name")
+
+        }
+        else if (type == "topic") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            inputs.querySelector(".subject").classList.remove("hidden");
+            inputs.querySelector(".chapter").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new topic name")
+
+        }
+        else if (type == "subtopic") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            inputs.querySelector(".subject").classList.remove("hidden");
+            inputs.querySelector(".chapter").classList.remove("hidden");
+            inputs.querySelector(".topic").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new subtopic name")
+
+        } else {
+            nameInput.setAttribute("placeholder", "type new category name")
+
+        }
+    }
+
+    function setRequestDropdown(type) {
+        let select = document.querySelector(".requestwindow").querySelector(`.${type}`);
+
+        let parent, placeholder;
+        if (type == 'subject') {
+            parent = 'category';
+            placeholder = `--Select Subject--`
+        }
+        else if (type == "chapter") {
+            parent = 'subject'
+            placeholder = `--Select Chapter--`
+        }
+        else if (type == "topic") {
+            parent = 'chapter'
+            placeholder = `--Select Topic--`
+        }
+        let id = document.querySelector(".requestwindow").querySelector(`.${parent}`).selectedOptions[0].id;
+        let html = `<option value="--Select ${type}--" selected hidden>${placeholder}</option>`;
+        fetchReq(`${qbgBaseURL}/${type}s/v2?${parent}_id=${id}`).then(res => {
+
+            res.data.forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+
+        })
+    }
+    const loginButton = document.querySelector('.login-button');
+    const logoutButton = document.querySelector('.logout-button');
+    function submitLoginDetails(el) {
+
+        let username = document.querySelector(".admin-login-username-value").value;
+        let password = document.querySelector(".admin-login-password-value").value;
+        el.innerHTML = "LOGGING IN..."
+        fetch(`${backendBaseURL}/qbgtags/login`, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({
+                username, password
+            })
+        }).then(response => {
+            response.json().then(json => {
+                if (json.status == "OKAY") {
+                    el.innerHTML = "Please wait..."
+                    document.querySelectorAll('.non-admin-button').forEach(el => {
+                        el.remove()
+                    });
+
+                    loginButton.classList.add('hidden')
+                    logoutButton.classList.remove('hidden')
+                    fetchRequests()
+                } else {
+                    el.innerHTML = "ERROR"
+                }
+            })
+        })
+    }
+    const requestRowDefault = document.querySelector('.request-row');
+    let requests = [];
+    function fetchRequests() {
+        closeAdminLoginWindow();
+
+        fetch(`${backendBaseURL}/qbgtags/requests?env=stage`).then(res => {
+            res.json().then(json => {
+                requests = json.data;
+                renderRequests()
+            })
+        })
+    }
+    let compare2 = (a, b) => (a.status ? 1 : 0 > b.status ? 1 : 0) ? 1 : ((b.status ? 1 : 0 > a.status ? 1 : 0) ? -1 : 0);
+    let compare = (a, b) => (a.english_name.charCodeAt(0) > b.english_name.charCodeAt(0)) ? 1 : ((b.english_name.charCodeAt(0) > a.english_name.charCodeAt(0)) ? -1 : 0);
+    function renderRequests() {
+        document.querySelectorAll('.row-tagging').forEach(el => {
+            deleteRow(el.getAttribute("number"))
+        });
+        filenameBox.classList.add("hidden");
+        noRowTextBox.classList.add("hidden");
+        footer.classList.add("hidden")
+        let approved = 0, rejected = 0, pending = 0
+        document.querySelectorAll(".request-row-visible").forEach(el => {
+            el.remove()
+        });
+        requests.sort(compare2)
+        requests.forEach(el => {
+            let keys = Object.keys(el);
+            keys.forEach(key => {
+                if (!el[key]) {
+                    el[key] = "N/A"
+                }
+                if (el[key] && el[key].toString().includes("--")) {
+                    el[key] = "N/A"
+                }
+            })
+            let newRow = requestRowDefault.cloneNode(true);
+            newRow.classList.add('request-row-visible')
+            let approveButton = newRow.querySelector('.approve-request-button');
+            let rejectButton = newRow.querySelector('.reject-request-button');
+            ground.appendChild(newRow)
+            newRow.classList.remove('hidden');
+            newRow.setAttribute('row-id', el.id)
+            approveButton.setAttribute('row-id', el.id);
+            rejectButton.setAttribute('row-id', el.id);
+            newRow.querySelector('.request-owner').innerHTML = `Request By: ${el.owner}`;
+            newRow.querySelector('.request-email').innerHTML = `Email: ${el.email}`;
+            newRow.querySelector('.request-type').innerHTML = `Request Type: ${el.type}`;
+            newRow.querySelector('.request-name').innerHTML = `Tag Name: ${el.name}`;
+            newRow.querySelector('.request-category').innerHTML = `Parent Category: ${el.catname}`;
+            newRow.querySelector('.request-subject').innerHTML = `Parent Subject: ${el.subname}`;
+            newRow.querySelector('.request-chapter').innerHTML = `Parent Chapter: ${el.chname}`;
+            newRow.querySelector('.request-topic').innerHTML = `Parent Topic: ${el.topicname}`;
+            if (el.status == "approved") {
+                approved++;
+                approveButton.innerHTML = `Approved`;
+                rejectButton.remove();
+                approveButton.classList.add('request-approved');
+                newRow.classList.add('acted')
+            } else if (el.status == "rejected") {
+                rejected++
+                rejectButton.innerHTML = `rejected`;
+                approveButton.remove();
+                rejectButton.classList.add('request-rejected');
+                newRow.classList.add('acted')
+
+            } else {
+                pending++;
+            }
+            document.querySelector(".request-count").classList.remove('hidden')
+            document.querySelector(".request-count").innerHTML = `<span class="request-count-span approved">Approved: ${approved}</span><span class="request-count-span rejected">Rejected: ${rejected}</span><span class="request-count-span pending">Pending: ${pending}</span>`
+        })
+    }
+    function actRequest(el, status) {
+        let requestId = el.getAttribute('row-id');
+        el.innerHTML = `please wait...`
+        fetch(`${backendBaseURL}/qbgtags/actonrequest`, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({
+                requestId, status
+            })
+        }).then(res => {
+            res.json().then(json => {
+                fetchRequests()
+            })
+        })
+    }
+    function logout() {
+        window.location.reload()
+    }
+    const fileNameInactive = document.querySelector("#filename-inactive");
+    const fileNameActive = document.querySelector("#filename-active");
+    let fileNameSaved = localStorage.getItem('filename') || "Untitled Tag Sheet";
+    if (fileNameSaved.length > 30) {
+        fileNameSaved = fileNameSaved.substring(0, 30) + "..."
+    }
+    fileNameInactive.innerHTML = `${fileNameSaved}<span class="filename-extension">.XLSX</span>`;
+    function activeFileName(event) {
+        event.stopPropagation()
+        let filename = fileNameInactive.innerText.replace(".XLSX", "");
+        fileNameInactive.classList.add("hidden");
+        fileNameActive.value = filename;
+        fileNameActive.classList.remove("hidden");
+    }
+    fileNameActive.addEventListener('click', (event) => {
+        event.stopPropagation()
+    })
+    document.body.addEventListener('click', () => {
+
+        let filename = fileNameActive.value;
+        localStorage.setItem('filename', filename)
+        if (filename.length > 30) {
+            filename = filename.substring(0, 30) + "..."
+        } else if (filename.length == 0) {
+            return;
+        }
+        fileNameInactive.innerHTML = `${filename}<span class="filename-extension">.XLSX</span>`;
+        fileNameActive.classList.add("hidden");
+        fileNameInactive.classList.remove("hidden");
+    })
+
+    function fileNameChange(el) {
+        if (el.value.length == 0) {
+            exportButton.classList.add("button-disabled");
+            exportButtonSection.classList.add("button-disabled");
+            clearAllButtonSection.classList.add("button-disabled");
+            el.style.borderBottom = '2px solid red';
+            return;
+        }
+        if (rows > 0) {
+            exportButton.classList.remove("button-disabled");
+            exportButtonSection.classList.remove("button-disabled");
+            clearAllButtonSection.classList.remove("button-disabled");
+        }
+        el.style.borderBottom = '2px solid #00ff44';
+    }
+    let undoHistory = [];
+    let undoTime = 60;
+    let undoActive = 0;
+    let undoInterval;
+    function clearAll(el) {
+        if (undoActive == 1) {
+            return;
+        }
+        undoHistory = [];
+        let rows = document.querySelectorAll(".row.row-tagging");
+        let count = rows.length;
+        rows.forEach(row => {
+            let rowData = [];
+            row.querySelectorAll('select').forEach(select => {
+                let val = select.selectedOptions[0].value;
+                rowData.push(val)
+            });
+            undoHistory.push(rowData)
+        });
+        rows.forEach(row => {
+            deleteRow(row.getAttribute("number"))
+        });
+        document.querySelector(".clear-all-section").classList.remove("button-disabled");
+        document.querySelector(".clear-all-button").removeAttribute("onclick");
+        el.innerHTML = `Cleared ${count} ${count == 1 ? "Row" : "Rows"} <span class="footer-button undo-button" onclick="undoLastClear(this)">Undo(${undoTime})</span>`;
+        el.classList.remove("footer-button");
+        document.querySelector(".close-undo").classList.remove("hidden");
+        undoActive = 1;
+        undoInterval = setInterval(() => {
+            undoTime--;
+            document.querySelector(".undo-button").innerHTML = `Undo(${undoTime})`;
+            if (undoTime == 0) {
+                el.innerHTML = `Clear All`
+                el.classList.add("footer-button");
+                closeUndo()
+            }
+        }, 1000);
+    }
+    function undoLastClear(el) {
+        undoHistory.forEach(row => {
+            addrow(row)
+        });
+        el.scrollIntoView({ behavior: "smooth" })
+        setTimeout(() => {
+            closeUndo();
+
+        }, 100);
+    }
+    function closeUndo() {
+        undoActive = 0;
+        undoTime = 60;
+        if (rows == 0) {
+            document.querySelector(".clear-all-section").classList.add("button-disabled")
+        }
+        document.querySelector(".close-undo").classList.add("hidden");
+        document.querySelector(".clear-all-button").innerHTML = `Clear All`
+        document.querySelector(".clear-all-button").classList.add("footer-button");
+        document.querySelector(".clear-all-button").setAttribute("onclick", "clearAll(this)");
+
+        clearInterval(undoInterval);
+    }
+    function showFooterError(text) {
+        errorTextFooter.classList.remove("hidden");
+        errorTextFooter.innerHTML = text;
+        let id = makeid(10);
+        errorTextFooter.setAttribute('uid', id)
+        setTimeout(() => {
+            if (errorTextFooter.getAttribute('uid') == id) {
+                errorTextFooter.classList.add("hidden");
+            }
+        }, 10000);
+    }
+    function onInputAddRow(el) {
+        if (!parseInt(el.value) || parseInt(el.value) <= 0) {
+            showFooterError(`Oops... please enter a valid number.`);
+            el.style.borderBottom = '2px solid red';
+        } else if (parseInt(el.value) + rows > 500) {
+            showFooterError(`Maximum 500 rows allowed for smooth performance.`);
+            el.style.borderBottom = '2px solid red';
+        } else {
+            errorTextFooter.classList.add("hidden");
+            el.style.borderBottom = '2px solid #00ff44';
+        }
+    }
+    function makeid(length) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        let counter = 0;
+        while (counter < length) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            counter += 1;
+        }
+        return result;
+    }
+</script>
+
+</html>
