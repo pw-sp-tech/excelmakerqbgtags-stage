@@ -806,7 +806,7 @@
 </body>
 <script>
     //document.querySelector(".overlay").classList.remove('hidden');
-   // document.querySelector(".overlay").innerHTML = '<span style="font-size:60px;top:150px;left:20%;position:absolute;">shutdown for maintenance</span>';
+    // document.querySelector(".overlay").innerHTML = '<span style="font-size:60px;top:150px;left:20%;position:absolute;">shutdown for maintenance</span>';
     const env = 'stage';
     const qbgBaseURL = env == 'stage' ? `https://qbg-backend-stage.penpencil.co` : `https://qbg-api.penpencil.co`;
     const backendBaseURL = `https://www.api-pw-internal-utilities.in`
@@ -1060,7 +1060,7 @@
                 "content-type": "application/json"
             },
             method: "POST",
-            body: JSON.stringify([type, name, owner, email, 'production', dropdownValues])
+            body: JSON.stringify([type, name, owner, email, 'stage', dropdownValues])
         }).then(res => {
             res.json().then(json => {
                 el.innerHTML = `Submit`;
