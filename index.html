@@ -1052,912 +1052,920 @@
         }if (typeof exports !== "undefined") make_xlsx_lib(exports); else if (typeof module !== "undefined" && module.exports) make_xlsx_lib(module.exports); else if (typeof define === "function" && define.amd) define("xlsx", function () { if (!XLSX.version) make_xlsx_lib(XLSX); return XLSX }); else make_xlsx_lib(XLSX); if (typeof window !== "undefined" && !window.XLSX) try { window.XLSX = XLSX } catch (e) { }
 </script>
 <script>
-        // window.location.href = '/excelmakerqbgtags-stage'
-        const env = 'production';
-        const qbgBaseURL = env == 'stage' ? `https://qbg-backend-stage.penpencil.co` : `https://qbg-api.penpencil.co`;
-        const backendBaseURL = `https://www.api-pw-internal-utilities.in`
-        // const backendBaseURL = `http://localhost:8080`
-        function fetchReq(url) {
-            return new Promise((resolve, reject) => {
-                fetch(`${backendBaseURL}/qbgtags?url=${encodeURI(url)}`).then(response => {
-                    response.json().then(json => {
-                        resolve(json)
-                    })
+    // window.location.href = '/excelmakerqbgtags-stage'
+    const env = 'production';
+    const qbgBaseURL = env == 'stage' ? `https://qbg-backend-stage.penpencil.co` : `https://qbg-api.penpencil.co`;
+    const backendBaseURL = `https://www.api-pw-internal-utilities.in`
+    // const backendBaseURL = `http://localhost:8080`
+    function fetchReq(url) {
+        return new Promise((resolve, reject) => {
+            fetch(`${backendBaseURL}/qbgtags?url=${encodeURI(url)}`).then(response => {
+                response.json().then(json => {
+                    resolve(json)
                 })
             })
+        })
+    }
+    let rows = 0;
+    const row = document.querySelector('.row');
+    const ground = document.querySelector('.ground');
+    const footer = document.querySelector(".add-row-footer");
+
+    const noRowTextBox = document.querySelector(".no-row-text-box");
+    const exportButton = document.querySelector(".export-button");
+    const exportButtonSection = document.querySelector(".export-button-section");
+    const clearAllButtonSection = document.querySelector(".clear-all-section");
+    const exportButton2RowCount = document.querySelector(".export-rows-count-2");
+    const addRowButton = document.querySelector(".add-row-button");
+    const errorTextFooter = document.querySelector(".error-text-footer");
+    exportButton.classList.add("button-disabled");
+    exportButtonSection.classList.add("button-disabled");
+    clearAllButtonSection.classList.add("button-disabled");
+
+    const addRowInput = document.querySelector(".add-row-input");
+    addRowInput.value = localStorage.getItem('add_row_input_value') || 10;
+
+    function addrow(selectedValues) {
+        if (rows >= 500) {
+            showFooterError(`Maximum 500 rows allowed for smooth performance.`)
+            return;
         }
-        let rows = 0;
-        const row = document.querySelector('.row');
-        const ground = document.querySelector('.ground');
-        const footer = document.querySelector(".add-row-footer");
+        noRowTextBox.classList.add("hidden");
+        rows++;
+        if (rows >= 500) {
+            addRowButton.classList.add("button-disabled");
+        } else {
+            addRowButton.classList.remove("button-disabled");
+        }
+        exportButton.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
+        exportButton2RowCount.innerHTML = `${rows} ${rows > 1 ? "Rows" : "Row"}`
+        let rowAll = document.querySelectorAll(".row");
+        exportButton.classList.remove("button-disabled");
+        exportButtonSection.classList.remove("button-disabled");
+        clearAllButtonSection.classList.remove("button-disabled");
+        let dataLastRow = [];
+        if (selectedValues) {
+            dataLastRow = selectedValues
+        } else {
+            rowAll[rowAll.length == 1 ? 0 : rowAll.length - 2].querySelectorAll("select").forEach(select => {
+                dataLastRow.push(select.selectedOptions[0].value || "--select--");
+            });
+        }
+        let newRow;
+        if (rowAll.length > 1) {
+            newRow = rowAll[rowAll.length - 1].cloneNode(true);
+        } else {
+            newRow = row.cloneNode(true);
+        }
 
-        const noRowTextBox = document.querySelector(".no-row-text-box");
-        const exportButton = document.querySelector(".export-button");
-        const exportButtonSection = document.querySelector(".export-button-section");
-        const clearAllButtonSection = document.querySelector(".clear-all-section");
-        const exportButton2RowCount = document.querySelector(".export-rows-count-2");
-        const addRowButton = document.querySelector(".add-row-button");
-        const errorTextFooter = document.querySelector(".error-text-footer");
-        exportButton.classList.add("button-disabled");
-        exportButtonSection.classList.add("button-disabled");
-        clearAllButtonSection.classList.add("button-disabled");
+        ground.insertBefore(newRow, row);
+        newRow.classList.remove('hidden');
+        newRow.classList.add('row-tagging');
+        newRow.querySelector(".row-number").innerHTML = `SN: ${rows}`;
+        newRow.setAttribute("number", rows)
+        newRow.style.opacity = "0";
+        newRow.querySelector(".delete-row-button").setAttribute("onclick", `deleteRow(${rows})`);
+        let count = -1;
+        newRow.querySelectorAll("select").forEach(select => {
+            count++;
+            select.value = dataLastRow[count];
+            if (dataLastRow[count] != "--select--") {
+                if (select.classList.contains("category-select")) {
+                    fetchSubjects(select)
+                }
+                else if (select.classList.contains("subject-select")) {
+                    fetchChapters(select)
+                }
+                else if (select.classList.contains("chapter-select")) {
+                    fetchTopics(select)
+                }
+                else if (select.classList.contains("topic-select")) {
+                    fetchSubtopics(select)
+                }
+            }
+        })
+        setTimeout(() => {
+            newRow.style.opacity = "1";
+        }, 100);
+    }
+    function addRowMulti(el) {
+        let numRows = parseInt(addRowInput.value);
+        if (!numRows || numRows <= 0) {
+            showFooterError(`Oops... please enter a valid number.`)
+            return;
+        }
 
-        const addRowInput = document.querySelector(".add-row-input");
-        addRowInput.value = localStorage.getItem('add_row_input_value') || 10;
-
-        function addrow(selectedValues) {
-            if (rows >= 500) {
-                showFooterError(`Maximum 500 rows allowed for smooth performance.`)
+        if (rows + numRows > 500) {
+            showFooterError(`Maximum 500 rows allowed for smooth performance.`);
+            return;
+        }
+        for (let x = 0; x < numRows; x++) {
+            addrow()
+        }
+        el.scrollIntoView({ behavior: "smooth" })
+    }
+    let data = [["subject", "chapter", "topic", "subtopic", "difficulty"]];
+    const difficultySwitch = document.querySelector(".difficulty-switch");
+    function exportasexcel() {
+        let dataObject = getDataAsObject(true, true);
+        let labels = [];
+        document.querySelector(".row").querySelectorAll(".select-label").forEach(el => {
+            let name = el.innerHTML.toLowerCase();
+            if (name == 'category' || (name == 'difficulty' && !localStorage.getItem('difficulty'))) {
                 return;
             }
-            noRowTextBox.classList.add("hidden");
-            rows++;
-            if (rows >= 500) {
-                addRowButton.classList.add("button-disabled");
-            } else {
-                addRowButton.classList.remove("button-disabled");
+            labels.push(name)
+            if (localStorage.getItem('include-tag-name')) {
+                labels.push(`${name}_name`)
             }
+        })
+        let dataCurrent = [labels];
+        dataObject.forEach(row => {
+            data.push(row)
+            dataCurrent.push(row)
+        })
+        var workbook = XLSX.utils.book_new(),
+            worksheet = XLSX.utils.aoa_to_sheet(dataCurrent);
+        workbook.SheetNames.push("Sheet1");
+        workbook.Sheets["Sheet1"] = worksheet;
+        XLSX.writeFile(workbook, `${document.querySelector("#filename-inactive").innerText.replace('.XLSX', '')}.xlsx`);
+        const exportHistorySaved = JSON.parse(localStorage.getItem('export-history') || JSON.stringify([]));
+        exportHistorySaved.push({
+            name: document.querySelector("#filename-inactive").innerText.replace('.XLSX', ''),
+            exported_at: new Date().toDateString(),
+            data: dataCurrent,
+            uid: generateRandomId()
+        });
+        exportHistorySaved.length < 10 || exportHistorySaved.shift();
+        localStorage.setItem('export-history', JSON.stringify(exportHistorySaved))
+    }
+    function deleteRow(rowNumber) {
+        document.querySelector(`.row[number="${rowNumber}"]`).remove();
+        rows--;
+        if (rows >= 500) {
+            addRowButton.classList.add("button-disabled")
+        } else {
+            addRowButton.classList.remove("button-disabled");
+        }
+        if (rows == 0) {
+            exportButton.innerHTML = `Export`
+            exportButton2RowCount.innerHTML = ``
+            noRowTextBox.classList.remove("hidden");
+            exportButton.classList.add("button-disabled");
+            exportButtonSection.classList.add("button-disabled");
+            clearAllButtonSection.classList.add("button-disabled");
+        } else {
             exportButton.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
-            exportButton2RowCount.innerHTML = `${rows} ${rows > 1 ? "Rows" : "Row"}`
-            let rowAll = document.querySelectorAll(".row");
+            exportButton2RowCount.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
+        }
+        let count = 0;
+        document.querySelectorAll('.row-tagging').forEach(el => {
+            count++;
+            el.setAttribute("number", `${count}`);
+            el.querySelector('.delete-row-button').setAttribute("onclick", `deleteRow(${count})`);
+            el.querySelector(".row-number").innerHTML = `SN: ${count}`;
+        });
+        saveState()
+    }
+    function fill() {
+        document.querySelectorAll("select").forEach(select => {
+            let random = Math.floor(Math.random() * 2) + 1
+            select.value = select.querySelectorAll("option")[random].value
+        })
+
+    }
+    function saveState() {
+        localStorage.setItem('data', JSON.stringify(getDataAsObject()));
+    }
+    function getDataAsObject(excludeCategory, id) {
+        let data = []
+        const allrows = document.querySelectorAll(".row-tagging");
+        allrows.forEach(row => {
+            let rowData = [];
+            row.querySelectorAll("select").forEach(select => {
+                if (select.classList.contains("category-select") && excludeCategory) {
+                    return;
+                }
+                if (select.classList.contains("difficulty-select") && !localStorage.getItem('difficulty')) {
+                    console.log(select.classList.contains("difficulty-select"), !localStorage.getItem('difficulty'), 'skipped')
+                    return;
+                }
+                let selectedOption = id ? select.selectedOptions[0].id : select.selectedOptions[0].value;
+                rowData.push(selectedOption)
+                if (localStorage.getItem('include-tag-name')) {
+                    rowData.push(select.selectedOptions[0].innerText)
+                }
+            });
+            data.push(rowData)
+        });
+        return data;
+    }
+
+    function getState() {
+        let data = JSON.parse(localStorage.getItem('data'));
+        data.forEach(row => {
+            addrow(row);
+        })
+    }
+    const overlay = document.querySelector(".overlay");
+    const requestWindow = document.querySelector(".requestwindow");
+    const requestTypeEl = document.querySelector(".request-type-value");
+    const requestNameEl = document.querySelector(".request-name-value");
+    const requestOwnerEl = document.querySelector(".request-owner-value");
+    const requestEmailEl = document.querySelector(".request-email-value");
+    const filenameBox = document.querySelector("#filename-box")
+    const adminLoginWindowEl = document.querySelector(".admin-login-window");
+    function requestNewTag() {
+        overlay.classList.remove("hidden")
+        requestWindow.classList.remove("hidden")
+    }
+    function adminLogin() {
+        overlay.classList.remove("hidden")
+        adminLoginWindowEl.classList.remove("hidden");
+        noRowTextBox.classList.add("hidden");
+        filenameBox.classList.add("hidden")
+    }
+    function closeRequestWindow() {
+        overlay.classList.add("hidden")
+        requestWindow.classList.add("hidden")
+        noRowTextBox.classList.remove("hidden");
+        filenameBox.classList.remove("hidden")
+    }
+    function closeAdminLoginWindow() {
+        overlay.classList.add("hidden")
+        adminLoginWindowEl.classList.add("hidden")
+        noRowTextBox.classList.remove("hidden");
+        filenameBox.classList.remove("hidden")
+    }
+    function submitRequestedTags(el) {
+
+        let type = requestTypeEl.selectedOptions[0].value;
+        let owner = requestOwnerEl.value;
+        let email = requestEmailEl.value;
+        if (!owner || !email) {
+            window.alert("Please fill all inputs");
+            return;
+        }
+        el.innerHTML = `Submitting...`
+        let dropdownValues = [];
+        document.querySelector(".requestwindow").querySelector(".inputs").querySelectorAll("select").forEach(select => {
+            dropdownValues.push([select.selectedOptions[0].id, select.selectedOptions[0].value])
+        })
+        let name = requestNameEl.value;
+        fetch(`${backendBaseURL}/qbgtags/submitrequest`, {
+            headers: {
+                "content-type": "application/json"
+            },
+            method: "POST",
+            body: JSON.stringify([type, name, owner, email, 'production', dropdownValues])
+        }).then(res => {
+            res.json().then(json => {
+                el.innerHTML = `Submit`;
+                closeRequestWindow()
+            })
+        })
+    }
+    let fetchedData = {};
+    fetchReq(`${qbgBaseURL}/category-configuration?status=visible`).then(response => {
+
+        categories = response.data;
+
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        let html2 = `<option value="--select--" selected hidden>--Select Category--</option>`;
+        categories.forEach(cat => {
+            html += `<option value="${cat.name}" data-select2-id="${cat.name}" id="${cat.unique_id}">${cat.name}</option>`;
+            html2 += `<option value="${cat.name}" id="${cat.unique_id}">${cat.name}</option>`;
+        });
+        document.querySelectorAll(".category-select").forEach(el => {
+            el.removeAttribute('disabled');
+            el.innerHTML = html;
+        });
+        document.querySelector(".requestwindow").querySelector(".category").innerHTML = html2;
+        $('.searchable').prop('disabled', false);
+    });
+    let categoryIdCurrentRow, subjectIdCurrentRow, chapterIdCurrentRow, topicIdCurrentRow, subtopicIdCurrentRow;
+    function fetchSubjects(el) {
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+        let categoryId = el.selectedOptions[0].id;
+        categoryIdCurrentRow = categoryId;
+        let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".subject-select");
+        resetDropdowns(rowNumber, ["subject", "chapter", "topic", "subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[categoryId]) {
+            fetchedData[categoryId].forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/subjects?category_id=${categoryId}`).then(res => {
+
+            fetchedData[categoryId] = res.data;
+            let subjects = res.data;
+            subjects.sort(compare);
+            subjects.forEach(subject => {
+                html += `<option value="${subject.english_name}" id="${subject.unique_id}">${subject.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+    function fetchChapters(el) {
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+
+        let subjectId = el.selectedOptions[0].id;
+        subjectIdCurrentRow = subjectId;
+        let currentRow = document.querySelector(`.row[number="${rowNumber}"]`);
+        let select = currentRow.querySelector(".chapter-select");
+        let currentRowCategoryId = currentRow.querySelector(".category-select").selectedOptions[0].id;
+
+        resetDropdowns(rowNumber, ["chapter", "topic", "subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[subjectId]) {
+            fetchedData[subjectId].forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/chapters?subject_id=${subjectId}&category_id=${categoryIdCurrentRow}`).then(res => {
+            fetchedData[subjectId] = res.data;
+            let chapters = res.data;
+            chapters.sort(compare);
+            chapters.forEach(ch => {
+                html += `<option value="${ch.english_name}" id="${ch.unique_id}">${ch.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+    function fetchTopics(el) {
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+
+        let chapterId = el.selectedOptions[0].id;
+        chapterIdCurrentRow = chapterId;
+        let currentRow = document.querySelector(`.row[number="${rowNumber}"]`);
+        let select = currentRow.querySelector(".topic-select");
+        let currentRowCategoryId = currentRow.querySelector(".category-select").selectedOptions[0].id;
+        let currentRowSubjectId = currentRow.querySelector(".subject-select").selectedOptions[0].id;
+
+        resetDropdowns(rowNumber, ["topic", "subtopic"])
+        select.querySelector('option').innerHTML = `Loading...`;
+
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[chapterId]) {
+            fetchedData[chapterId].forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/topics?chapter_id=${chapterId}&category_id=${currentRowCategoryId}&subject_id=${currentRowSubjectId}`).then(res => {
+            fetchedData[chapterId] = res.data;
+            let topics = res.data;
+            topics.sort(compare);
+            topics.forEach(topic => {
+                html += `<option value="${topic.english_name}" id="${topic.unique_id}">${topic.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+    function fetchSubtopics(el) {
+
+        saveState(el);
+        let rowNumber = el.parentElement.parentElement.getAttribute('number');
+
+        let topicId = el.selectedOptions[0].id;
+        topicIdCurrentRow = topicId;
+        let currentRow = document.querySelector(`.row[number="${rowNumber}"]`);
+        let select = currentRow.querySelector(".subtopic-select");
+        let currentRowCategoryId = currentRow.querySelector(".category-select").selectedOptions[0].id;
+        let currentRowSubjectId = currentRow.querySelector(".subject-select").selectedOptions[0].id;
+        let currentRowChapterId = currentRow.querySelector(".chapter-select").selectedOptions[0].id;
+        resetDropdowns(rowNumber, ["subtopic"]);
+        select.querySelector('option').innerHTML = `Loading...`;
+        let html = `<option value="--select--" selected hidden>--select--</option>`;
+        if (fetchedData[topicId]) {
+            fetchedData[topicId].forEach(subtopic => {
+                html += `<option value="${subtopic.english_name}" id="${subtopic.unique_id}">${subtopic.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+            return;
+        }
+        fetchReq(`${qbgBaseURL}/subtopics?topic_id=${topicId}&category_id=${currentRowCategoryId}&chapter_id=${currentRowChapterId}&subject_id=${currentRowSubjectId}`).then(res => {
+
+
+            fetchedData[topicId] = res.data;
+            let subtopics = res.data;
+            subtopics.sort(compare);
+            subtopics.forEach(subtopic => {
+                html += `<option value="${subtopic.english_name}" id="${subtopic.unique_id}">${subtopic.english_name}</option>`
+            });
+            select.innerHTML = html;
+            select.removeAttribute('disabled');
+
+        })
+    }
+
+    function resetDropdowns(rowNumber, arr) {
+        let row = document.querySelector(`.row[number="${rowNumber}"]`);
+        if (arr.includes("subject")) {
+            row.querySelector(".subject-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+        if (arr.includes("chapter")) {
+            row.querySelector(".chapter-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+        if (arr.includes("topic")) {
+            row.querySelector(".topic-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+        if (arr.includes("subtopic")) {
+
+            row.querySelector(".subtopic-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
+        }
+    }
+    window.onbeforeunload = function () {
+        if (rows > 0) {
+            return "Data will be lost if you refresh the page, are you sure?";
+        }
+    };
+
+    function requestTypeSelected(el) {
+        let type = el.selectedOptions[0].value;
+        let inputs = document.querySelector(".requestwindow").querySelector(".inputs")
+        let nameInput = inputs.querySelector("input");
+        nameInput.classList.remove("hidden")
+        if (type == "subject") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new subject name")
+        }
+        else if (type == "chapter") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            inputs.querySelector(".subject").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new chapter name")
+
+        }
+        else if (type == "topic") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            inputs.querySelector(".subject").classList.remove("hidden");
+            inputs.querySelector(".chapter").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new topic name")
+
+        }
+        else if (type == "subtopic") {
+            inputs.querySelector(".category").classList.remove("hidden");
+            inputs.querySelector(".subject").classList.remove("hidden");
+            inputs.querySelector(".chapter").classList.remove("hidden");
+            inputs.querySelector(".topic").classList.remove("hidden");
+            nameInput.setAttribute("placeholder", "type new subtopic name")
+
+        } else {
+            nameInput.setAttribute("placeholder", "type new category name")
+
+        }
+    }
+
+    function setRequestDropdown(type) {
+        let select = document.querySelector(".requestwindow").querySelector(`.${type}`);
+
+        let parent, placeholder;
+        if (type == 'subject') {
+            parent = 'category';
+            placeholder = `--Select Subject--`
+        }
+        else if (type == "chapter") {
+            parent = 'subject'
+            placeholder = `--Select Chapter--`
+        }
+        else if (type == "topic") {
+            parent = 'chapter'
+            placeholder = `--Select Topic--`
+        }
+        let id = document.querySelector(".requestwindow").querySelector(`.${parent}`).selectedOptions[0].id;
+        let html = `<option value="--Select ${type}--" selected hidden>${placeholder}</option>`;
+        fetchReq(`${qbgBaseURL}/${type}s/v2?${parent}_id=${id}`).then(res => {
+
+            res.data.forEach(el => {
+                html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
+            });
+            select.innerHTML = html;
+
+        })
+    }
+    const loginButton = document.querySelector('.login-button');
+    const logoutButton = document.querySelector('.logout-button');
+    function submitLoginDetails(el) {
+
+        let username = document.querySelector(".admin-login-username-value").value;
+        let password = document.querySelector(".admin-login-password-value").value;
+        el.innerHTML = "LOGGING IN..."
+        fetch(`${backendBaseURL}/qbgtags/login`, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({
+                username, password
+            })
+        }).then(response => {
+            response.json().then(json => {
+                if (json.status == "OKAY") {
+                    el.innerHTML = "Please wait..."
+                    document.querySelectorAll('.non-admin-button').forEach(el => {
+                        el.remove()
+                    });
+
+                    loginButton.classList.add('hidden')
+                    logoutButton.classList.remove('hidden')
+                    fetchRequests()
+                } else {
+                    el.innerHTML = "ERROR"
+                }
+            })
+        })
+    }
+    const requestRowDefault = document.querySelector('.request-row');
+    let requests = [];
+    function fetchRequests() {
+        closeAdminLoginWindow();
+
+        fetch(`${backendBaseURL}/qbgtags/requests?env=${env}`).then(res => {
+            res.json().then(json => {
+                requests = json.data;
+                renderRequests()
+            })
+        })
+    }
+    let compare2 = (a, b) => (a.status ? 1 : 0 > b.status ? 1 : 0) ? 1 : ((b.status ? 1 : 0 > a.status ? 1 : 0) ? -1 : 0);
+    let compare = (a, b) => (a.english_name.charCodeAt(0) > b.english_name.charCodeAt(0)) ? 1 : ((b.english_name.charCodeAt(0) > a.english_name.charCodeAt(0)) ? -1 : 0);
+    function renderRequests() {
+        document.querySelectorAll('.row-tagging').forEach(el => {
+            deleteRow(el.getAttribute("number"))
+        });
+        filenameBox.classList.add("hidden");
+        noRowTextBox.classList.add("hidden");
+        footer.classList.add("hidden")
+        let approved = 0, rejected = 0, pending = 0
+        document.querySelectorAll(".request-row-visible").forEach(el => {
+            el.remove()
+        });
+        requests.sort(compare2)
+        requests.forEach(el => {
+            let keys = Object.keys(el);
+            keys.forEach(key => {
+                if (!el[key]) {
+                    el[key] = "N/A"
+                }
+                if (el[key] && el[key].toString().includes("--")) {
+                    el[key] = "N/A"
+                }
+            })
+            let newRow = requestRowDefault.cloneNode(true);
+            newRow.classList.add('request-row-visible')
+            let approveButton = newRow.querySelector('.approve-request-button');
+            let rejectButton = newRow.querySelector('.reject-request-button');
+            ground.appendChild(newRow)
+            newRow.classList.remove('hidden');
+            newRow.setAttribute('row-id', el.id)
+            approveButton.setAttribute('row-id', el.id);
+            rejectButton.setAttribute('row-id', el.id);
+            newRow.querySelector('.request-owner').innerHTML = `Request By: ${el.owner}`;
+            newRow.querySelector('.request-email').innerHTML = `Email: ${el.email}`;
+            newRow.querySelector('.request-type').innerHTML = `Request Type: ${el.type}`;
+            newRow.querySelector('.request-name').innerHTML = `Tag Name: ${el.name}`;
+            newRow.querySelector('.request-category').innerHTML = `Parent Category: ${el.catname}`;
+            newRow.querySelector('.request-subject').innerHTML = `Parent Subject: ${el.subname}`;
+            newRow.querySelector('.request-chapter').innerHTML = `Parent Chapter: ${el.chname}`;
+            newRow.querySelector('.request-topic').innerHTML = `Parent Topic: ${el.topicname}`;
+            if (el.status == "approved") {
+                approved++;
+                approveButton.innerHTML = `Approved`;
+                rejectButton.remove();
+                approveButton.classList.add('request-approved');
+                newRow.classList.add('acted')
+            } else if (el.status == "rejected") {
+                rejected++
+                rejectButton.innerHTML = `rejected`;
+                approveButton.remove();
+                rejectButton.classList.add('request-rejected');
+                newRow.classList.add('acted')
+
+            } else {
+                pending++;
+            }
+            document.querySelector(".request-count").classList.remove('hidden')
+            document.querySelector(".request-count").innerHTML = `<span class="request-count-span approved">Approved: ${approved}</span><span class="request-count-span rejected">Rejected: ${rejected}</span><span class="request-count-span pending">Pending: ${pending}</span>`
+        })
+    }
+    function actRequest(el, status) {
+        let requestId = el.getAttribute('row-id');
+        el.innerHTML = `please wait...`
+        fetch(`${backendBaseURL}/qbgtags/actonrequest`, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({
+                requestId, status
+            })
+        }).then(res => {
+            res.json().then(json => {
+                fetchRequests()
+            })
+        })
+    }
+    function logout() {
+        window.location.reload()
+    }
+    const fileNameInactive = document.querySelector("#filename-inactive");
+    const fileNameActive = document.querySelector("#filename-active");
+    let fileNameSaved = localStorage.getItem('filename') || "Untitled Tag Sheet";
+    if (fileNameSaved.length > 30) {
+        fileNameSaved = fileNameSaved.substring(0, 30) + "..."
+    }
+    fileNameInactive.innerHTML = `${fileNameSaved}<span class="filename-extension">.XLSX</span>`;
+    function activeFileName(event) {
+        event.stopPropagation()
+        let filename = fileNameInactive.innerText.replace(".XLSX", "");
+        fileNameInactive.classList.add("hidden");
+        fileNameActive.value = filename;
+        fileNameActive.classList.remove("hidden");
+    }
+    fileNameActive.addEventListener('click', (event) => {
+        event.stopPropagation()
+    })
+    document.body.addEventListener('click', () => {
+
+        let filename = fileNameActive.value;
+        localStorage.setItem('filename', filename)
+        if (filename.length > 30) {
+            filename = filename.substring(0, 30) + "..."
+        } else if (filename.length == 0) {
+            return;
+        }
+        fileNameInactive.innerHTML = `${filename}<span class="filename-extension">.XLSX</span>`;
+        fileNameActive.classList.add("hidden");
+        fileNameInactive.classList.remove("hidden");
+    })
+
+    function fileNameChange(el) {
+        if (el.value.length == 0) {
+            exportButton.classList.add("button-disabled");
+            exportButtonSection.classList.add("button-disabled");
+            clearAllButtonSection.classList.add("button-disabled");
+            el.style.borderBottom = '2px solid red';
+            return;
+        }
+        if (rows > 0) {
             exportButton.classList.remove("button-disabled");
             exportButtonSection.classList.remove("button-disabled");
             clearAllButtonSection.classList.remove("button-disabled");
-            let dataLastRow = [];
-            if (selectedValues) {
-                dataLastRow = selectedValues
-            } else {
-                rowAll[rowAll.length == 1 ? 0 : rowAll.length - 2].querySelectorAll("select").forEach(select => {
-                    dataLastRow.push(select.selectedOptions[0].value || "--select--");
-                });
-            }
-            let newRow;
-            if (rowAll.length > 1) {
-                newRow = rowAll[rowAll.length - 1].cloneNode(true);
-            } else {
-                newRow = row.cloneNode(true);
-            }
-
-            ground.insertBefore(newRow, row);
-            newRow.classList.remove('hidden');
-            newRow.classList.add('row-tagging');
-            newRow.querySelector(".row-number").innerHTML = `SN: ${rows}`;
-            newRow.setAttribute("number", rows)
-            newRow.style.opacity = "0";
-            newRow.querySelector(".delete-row-button").setAttribute("onclick", `deleteRow(${rows})`);
-            let count = -1;
-            newRow.querySelectorAll("select").forEach(select => {
-                count++;
-                select.value = dataLastRow[count];
-                if (dataLastRow[count] != "--select--") {
-                    if (select.classList.contains("category-select")) {
-                        fetchSubjects(select)
-                    }
-                    else if (select.classList.contains("subject-select")) {
-                        fetchChapters(select)
-                    }
-                    else if (select.classList.contains("chapter-select")) {
-                        fetchTopics(select)
-                    }
-                    else if (select.classList.contains("topic-select")) {
-                        fetchSubtopics(select)
-                    }
-                }
-            })
-            setTimeout(() => {
-                newRow.style.opacity = "1";
-            }, 100);
         }
-        function addRowMulti(el) {
-            let numRows = parseInt(addRowInput.value);
-            if (!numRows || numRows <= 0) {
-                showFooterError(`Oops... please enter a valid number.`)
-                return;
-            }
-
-            if (rows + numRows > 500) {
-                showFooterError(`Maximum 500 rows allowed for smooth performance.`);
-                return;
-            }
-            for (let x = 0; x < numRows; x++) {
-                addrow()
-            }
-            el.scrollIntoView({ behavior: "smooth" })
+        el.style.borderBottom = '2px solid var(--envcolor)';
+    }
+    let undoHistory = [];
+    let undoTime = 60;
+    let undoActive = 0;
+    let undoInterval;
+    function clearAll(el) {
+        if (undoActive == 1) {
+            return;
         }
-        let data = [["subject", "chapter", "topic", "subtopic", "difficulty"]];
-        const difficultySwitch = document.querySelector(".difficulty-switch");
-        function exportasexcel() {
-            let dataObject = getDataAsObject(true, true);
-            let labels = [];
-            document.querySelector(".row").querySelectorAll(".select-label").forEach(el => {
-                let name = el.innerHTML.toLowerCase();
-                if (name == 'category' || (name == 'difficulty' && !localStorage.getItem('difficulty'))) {
-                    return;
-                }
-                labels.push(name)
-                if (localStorage.getItem('include-tag-name')) {
-                    labels.push(`${name}_name`)
-                }
-            })
-            let dataCurrent = [labels];
-            dataObject.forEach(row => {
-                data.push(row)
-                dataCurrent.push(row)
-            })
-            var workbook = XLSX.utils.book_new(),
-                worksheet = XLSX.utils.aoa_to_sheet(dataCurrent);
-            workbook.SheetNames.push("Sheet1");
-            workbook.Sheets["Sheet1"] = worksheet;
-            XLSX.writeFile(workbook, `${document.querySelector("#filename-inactive").innerText.replace('.XLSX', '')}.xlsx`);
-            const exportHistorySaved = JSON.parse(localStorage.getItem('export-history') || JSON.stringify([]));
-            exportHistorySaved.push({
-                name: document.querySelector("#filename-inactive").innerText.replace('.XLSX', ''),
-                exported_at: new Date().toDateString(),
-                data: dataCurrent,
-                uid: generateRandomId()
+        undoHistory = [];
+        let rows = document.querySelectorAll(".row.row-tagging");
+        let count = rows.length;
+        rows.forEach(row => {
+            let rowData = [];
+            row.querySelectorAll('select').forEach(select => {
+                let val = select.selectedOptions[0].value;
+                rowData.push(val)
             });
-            exportHistorySaved.length < 10 || exportHistorySaved.shift();
-            localStorage.setItem('export-history', JSON.stringify(exportHistorySaved))
-        }
-        function deleteRow(rowNumber) {
-            document.querySelector(`.row[number="${rowNumber}"]`).remove();
-            rows--;
-            if (rows >= 500) {
-                addRowButton.classList.add("button-disabled")
-            } else {
-                addRowButton.classList.remove("button-disabled");
-            }
-            if (rows == 0) {
-                exportButton.innerHTML = `Export`
-                exportButton2RowCount.innerHTML = ``
-                noRowTextBox.classList.remove("hidden");
-                exportButton.classList.add("button-disabled");
-                exportButtonSection.classList.add("button-disabled");
-                clearAllButtonSection.classList.add("button-disabled");
-            } else {
-                exportButton.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
-                exportButton2RowCount.innerHTML = `Export (${rows} ${rows > 1 ? "Rows" : "Row"})`
-            }
-            let count = 0;
-            document.querySelectorAll('.row-tagging').forEach(el => {
-                count++;
-                el.setAttribute("number", `${count}`);
-                el.querySelector('.delete-row-button').setAttribute("onclick", `deleteRow(${count})`);
-                el.querySelector(".row-number").innerHTML = `SN: ${count}`;
-            });
-            saveState()
-        }
-        function fill() {
-            document.querySelectorAll("select").forEach(select => {
-                let random = Math.floor(Math.random() * 2) + 1
-                select.value = select.querySelectorAll("option")[random].value
-            })
-
-        }
-        function saveState() {
-            localStorage.setItem('data', JSON.stringify(getDataAsObject()));
-        }
-        function getDataAsObject(excludeCategory, id) {
-            let data = []
-            const allrows = document.querySelectorAll(".row-tagging");
-            allrows.forEach(row => {
-                let rowData = [];
-                row.querySelectorAll("select").forEach(select => {
-                    if (select.classList.contains("category-select") && excludeCategory) {
-                        return;
-                    }
-                    if (select.classList.contains("difficulty-select") && !localStorage.getItem('difficulty')) {
-                        console.log(select.classList.contains("difficulty-select"), !localStorage.getItem('difficulty'), 'skipped')
-                        return;
-                    }
-                    let selectedOption = id ? select.selectedOptions[0].id : select.selectedOptions[0].value;
-                    rowData.push(selectedOption)
-                    if (localStorage.getItem('include-tag-name')) {
-                        rowData.push(select.selectedOptions[0].innerText)
-                    }
-                });
-                data.push(rowData)
-            });
-            return data;
-        }
-
-        function getState() {
-            let data = JSON.parse(localStorage.getItem('data'));
-            data.forEach(row => {
-                addrow(row);
-            })
-        }
-        const overlay = document.querySelector(".overlay");
-        const requestWindow = document.querySelector(".requestwindow");
-        const requestTypeEl = document.querySelector(".request-type-value");
-        const requestNameEl = document.querySelector(".request-name-value");
-        const requestOwnerEl = document.querySelector(".request-owner-value");
-        const requestEmailEl = document.querySelector(".request-email-value");
-        const filenameBox = document.querySelector("#filename-box")
-        const adminLoginWindowEl = document.querySelector(".admin-login-window");
-        function requestNewTag() {
-            overlay.classList.remove("hidden")
-            requestWindow.classList.remove("hidden")
-        }
-        function adminLogin() {
-            overlay.classList.remove("hidden")
-            adminLoginWindowEl.classList.remove("hidden");
-            noRowTextBox.classList.add("hidden");
-            filenameBox.classList.add("hidden")
-        }
-        function closeRequestWindow() {
-            overlay.classList.add("hidden")
-            requestWindow.classList.add("hidden")
-            noRowTextBox.classList.remove("hidden");
-            filenameBox.classList.remove("hidden")
-        }
-        function closeAdminLoginWindow() {
-            overlay.classList.add("hidden")
-            adminLoginWindowEl.classList.add("hidden")
-            noRowTextBox.classList.remove("hidden");
-            filenameBox.classList.remove("hidden")
-        }
-        function submitRequestedTags(el) {
-
-            let type = requestTypeEl.selectedOptions[0].value;
-            let owner = requestOwnerEl.value;
-            let email = requestEmailEl.value;
-            if (!owner || !email) {
-                window.alert("Please fill all inputs");
-                return;
-            }
-            el.innerHTML = `Submitting...`
-            let dropdownValues = [];
-            document.querySelector(".requestwindow").querySelector(".inputs").querySelectorAll("select").forEach(select => {
-                dropdownValues.push([select.selectedOptions[0].id, select.selectedOptions[0].value])
-            })
-            let name = requestNameEl.value;
-            fetch(`${backendBaseURL}/qbgtags/submitrequest`, {
-                headers: {
-                    "content-type": "application/json"
-                },
-                method: "POST",
-                body: JSON.stringify([type, name, owner, email, 'production', dropdownValues])
-            }).then(res => {
-                res.json().then(json => {
-                    el.innerHTML = `Submit`;
-                    closeRequestWindow()
-                })
-            })
-        }
-        let fetchedData = {};
-        fetchReq(`${qbgBaseURL}/category-configuration?status=visible`).then(response => {
-
-            categories = response.data;
-
-            let html = `<option value="--select--" selected hidden>--select--</option>`;
-            let html2 = `<option value="--select--" selected hidden>--Select Category--</option>`;
-            categories.forEach(cat => {
-                html += `<option value="${cat.name}" data-select2-id="${cat.name}" id="${cat.unique_id}">${cat.name}</option>`;
-                html2 += `<option value="${cat.name}" id="${cat.unique_id}">${cat.name}</option>`;
-            });
-            document.querySelectorAll(".category-select").forEach(el => {
-                el.removeAttribute('disabled');
-                el.innerHTML = html;
-            });
-            document.querySelector(".requestwindow").querySelector(".category").innerHTML = html2;
-            $('.searchable').prop('disabled', false);
+            undoHistory.push(rowData)
         });
-        let categoryIdCurrentRow, subjectIdCurrentRow, chapterIdCurrentRow, topicIdCurrentRow, subtopicIdCurrentRow;
-        function fetchSubjects(el) {
-            saveState(el);
-            let rowNumber = el.parentElement.parentElement.getAttribute('number');
-            let categoryId = el.selectedOptions[0].id;
-            categoryIdCurrentRow = categoryId;
-            let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".subject-select");
-            resetDropdowns(rowNumber, ["subject", "chapter", "topic", "subtopic"])
-            select.querySelector('option').innerHTML = `Loading...`;
-            let html = `<option value="--select--" selected hidden>--select--</option>`;
-            if (fetchedData[categoryId]) {
-                fetchedData[categoryId].forEach(el => {
-                    html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-                return;
+        rows.forEach(row => {
+            deleteRow(row.getAttribute("number"))
+        });
+        document.querySelector(".clear-all-section").classList.remove("button-disabled");
+        document.querySelector(".clear-all-button").removeAttribute("onclick");
+        el.innerHTML = `Cleared ${count} ${count == 1 ? "Row" : "Rows"} <span class="footer-button undo-button" onclick="undoLastClear(this)">Undo(${undoTime})</span>`;
+        el.classList.remove("footer-button");
+        document.querySelector(".close-undo").classList.remove("hidden");
+        undoActive = 1;
+        undoInterval = setInterval(() => {
+            undoTime--;
+            document.querySelector(".undo-button").innerHTML = `Undo(${undoTime})`;
+            if (undoTime == 0) {
+                el.innerHTML = `Clear All`
+                el.classList.add("footer-button");
+                closeUndo()
             }
-            fetchReq(`${qbgBaseURL}/subjects?category_id=${categoryId}`).then(res => {
+        }, 1000);
+    }
+    function undoLastClear(el) {
+        document.querySelectorAll(".row.row-tagging").forEach(row => {
+            deleteRow(row.getAttribute("number"))
+        });
+        undoHistory.forEach(row => {
+            addrow(row)
+        });
+        el.scrollIntoView({ behavior: "smooth" })
+        setTimeout(() => {
+            closeUndo();
 
-                fetchedData[categoryId] = res.data;
-                let subjects = res.data;
-                subjects.sort(compare);
-                subjects.forEach(subject => {
-                    html += `<option value="${subject.english_name}" id="${subject.unique_id}">${subject.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-
-            })
+        }, 100);
+    }
+    function closeUndo() {
+        undoActive = 0;
+        undoTime = 60;
+        if (rows == 0) {
+            document.querySelector(".clear-all-section").classList.add("button-disabled")
         }
-        function fetchChapters(el) {
-            saveState(el);
-            let rowNumber = el.parentElement.parentElement.getAttribute('number');
+        document.querySelector(".close-undo").classList.add("hidden");
+        document.querySelector(".clear-all-button").innerHTML = `Clear All`
+        document.querySelector(".clear-all-button").classList.add("footer-button");
+        document.querySelector(".clear-all-button").setAttribute("onclick", "clearAll(this)");
 
-            let subjectId = el.selectedOptions[0].id;
-            subjectIdCurrentRow = subjectId;
-            let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".chapter-select");
-
-            resetDropdowns(rowNumber, ["chapter", "topic", "subtopic"])
-            select.querySelector('option').innerHTML = `Loading...`;
-            let html = `<option value="--select--" selected hidden>--select--</option>`;
-            if (fetchedData[subjectId]) {
-                fetchedData[subjectId].forEach(el => {
-                    html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-                return;
+        clearInterval(undoInterval);
+    }
+    function showFooterError(text) {
+        errorTextFooter.classList.remove("hidden");
+        errorTextFooter.innerHTML = text;
+        let id = makeid(10);
+        errorTextFooter.setAttribute('uid', id)
+        setTimeout(() => {
+            if (errorTextFooter.getAttribute('uid') == id) {
+                errorTextFooter.classList.add("hidden");
             }
-            fetchReq(`${qbgBaseURL}/chapters?subject_id=${subjectId}&category_id=${categoryIdCurrentRow}`).then(res => {
-                fetchedData[subjectId] = res.data;
-                let chapters = res.data;
-                chapters.sort(compare);
-                chapters.forEach(ch => {
-                    html += `<option value="${ch.english_name}" id="${ch.unique_id}">${ch.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-
-            })
-        }
-        function fetchTopics(el) {
-            saveState(el);
-            let rowNumber = el.parentElement.parentElement.getAttribute('number');
-
-            let chapterId = el.selectedOptions[0].id;
-            chapterIdCurrentRow = chapterId;
-            let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".topic-select");
-
-            resetDropdowns(rowNumber, ["topic", "subtopic"])
-            select.querySelector('option').innerHTML = `Loading...`;
-
-            let html = `<option value="--select--" selected hidden>--select--</option>`;
-            if (fetchedData[chapterId]) {
-                fetchedData[chapterId].forEach(el => {
-                    html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-                return;
-            }
-            fetchReq(`${qbgBaseURL}/topics?chapter_id=${chapterId}&category_id=${categoryIdCurrentRow}&subject_id=${subjectIdCurrentRow}`).then(res => {
-                fetchedData[chapterId] = res.data;
-                let topics = res.data;
-                topics.sort(compare);
-                topics.forEach(topic => {
-                    html += `<option value="${topic.english_name}" id="${topic.unique_id}">${topic.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-
-            })
-        }
-        function fetchSubtopics(el) {
-
-            saveState(el);
-            let rowNumber = el.parentElement.parentElement.getAttribute('number');
-
-            let topicId = el.selectedOptions[0].id;
-            topicIdCurrentRow = topicId;
-            let select = document.querySelector(`.row[number="${rowNumber}"]`).querySelector(".subtopic-select");
-
-            resetDropdowns(rowNumber, ["subtopic"])
-            select.querySelector('option').innerHTML = `Loading...`;
-            let html = `<option value="--select--" selected hidden>--select--</option>`;
-            if (fetchedData[topicId]) {
-                fetchedData[topicId].forEach(subtopic => {
-                    html += `<option value="${subtopic.english_name}" id="${subtopic.unique_id}">${subtopic.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-                return;
-            }
-            fetchReq(`${qbgBaseURL}/subtopics?topic_id=${topicId}&category_id=${categoryIdCurrentRow}&chapter_id=${chapterIdCurrentRow}&subject_id=${subjectIdCurrentRow}`).then(res => {
-
-
-                fetchedData[topicId] = res.data;
-                let subtopics = res.data;
-                subtopics.sort(compare);
-                subtopics.forEach(subtopic => {
-                    html += `<option value="${subtopic.english_name}" id="${subtopic.unique_id}">${subtopic.english_name}</option>`
-                });
-                select.innerHTML = html;
-                select.removeAttribute('disabled');
-
-            })
-        }
-
-        function resetDropdowns(rowNumber, arr) {
-            let row = document.querySelector(`.row[number="${rowNumber}"]`);
-            if (arr.includes("subject")) {
-                row.querySelector(".subject-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
-            }
-            if (arr.includes("chapter")) {
-                row.querySelector(".chapter-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
-            }
-            if (arr.includes("topic")) {
-                row.querySelector(".topic-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
-            }
-            if (arr.includes("subtopic")) {
-
-                row.querySelector(".subtopic-select").innerHTML = `<option value="--select--" selected hidden>--select--</option>`
-            }
-        }
-        window.onbeforeunload = function () {
-            if (rows > 0) {
-                return "Data will be lost if you refresh the page, are you sure?";
-            }
-        };
-
-        function requestTypeSelected(el) {
-            let type = el.selectedOptions[0].value;
-            let inputs = document.querySelector(".requestwindow").querySelector(".inputs")
-            let nameInput = inputs.querySelector("input");
-            nameInput.classList.remove("hidden")
-            if (type == "subject") {
-                inputs.querySelector(".category").classList.remove("hidden");
-                nameInput.setAttribute("placeholder", "type new subject name")
-            }
-            else if (type == "chapter") {
-                inputs.querySelector(".category").classList.remove("hidden");
-                inputs.querySelector(".subject").classList.remove("hidden");
-                nameInput.setAttribute("placeholder", "type new chapter name")
-
-            }
-            else if (type == "topic") {
-                inputs.querySelector(".category").classList.remove("hidden");
-                inputs.querySelector(".subject").classList.remove("hidden");
-                inputs.querySelector(".chapter").classList.remove("hidden");
-                nameInput.setAttribute("placeholder", "type new topic name")
-
-            }
-            else if (type == "subtopic") {
-                inputs.querySelector(".category").classList.remove("hidden");
-                inputs.querySelector(".subject").classList.remove("hidden");
-                inputs.querySelector(".chapter").classList.remove("hidden");
-                inputs.querySelector(".topic").classList.remove("hidden");
-                nameInput.setAttribute("placeholder", "type new subtopic name")
-
-            } else {
-                nameInput.setAttribute("placeholder", "type new category name")
-
-            }
-        }
-
-        function setRequestDropdown(type) {
-            let select = document.querySelector(".requestwindow").querySelector(`.${type}`);
-
-            let parent, placeholder;
-            if (type == 'subject') {
-                parent = 'category';
-                placeholder = `--Select Subject--`
-            }
-            else if (type == "chapter") {
-                parent = 'subject'
-                placeholder = `--Select Chapter--`
-            }
-            else if (type == "topic") {
-                parent = 'chapter'
-                placeholder = `--Select Topic--`
-            }
-            let id = document.querySelector(".requestwindow").querySelector(`.${parent}`).selectedOptions[0].id;
-            let html = `<option value="--Select ${type}--" selected hidden>${placeholder}</option>`;
-            fetchReq(`${qbgBaseURL}/${type}s/v2?${parent}_id=${id}`).then(res => {
-
-                res.data.forEach(el => {
-                    html += `<option value="${el.english_name}" id="${el.unique_id}">${el.english_name}</option>`
-                });
-                select.innerHTML = html;
-
-            })
-        }
-        const loginButton = document.querySelector('.login-button');
-        const logoutButton = document.querySelector('.logout-button');
-        function submitLoginDetails(el) {
-
-            let username = document.querySelector(".admin-login-username-value").value;
-            let password = document.querySelector(".admin-login-password-value").value;
-            el.innerHTML = "LOGGING IN..."
-            fetch(`${backendBaseURL}/qbgtags/login`, {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify({
-                    username, password
-                })
-            }).then(response => {
-                response.json().then(json => {
-                    if (json.status == "OKAY") {
-                        el.innerHTML = "Please wait..."
-                        document.querySelectorAll('.non-admin-button').forEach(el => {
-                            el.remove()
-                        });
-
-                        loginButton.classList.add('hidden')
-                        logoutButton.classList.remove('hidden')
-                        fetchRequests()
-                    } else {
-                        el.innerHTML = "ERROR"
-                    }
-                })
-            })
-        }
-        const requestRowDefault = document.querySelector('.request-row');
-        let requests = [];
-        function fetchRequests() {
-            closeAdminLoginWindow();
-
-            fetch(`${backendBaseURL}/qbgtags/requests?env=${env}`).then(res => {
-                res.json().then(json => {
-                    requests = json.data;
-                    renderRequests()
-                })
-            })
-        }
-        let compare2 = (a, b) => (a.status ? 1 : 0 > b.status ? 1 : 0) ? 1 : ((b.status ? 1 : 0 > a.status ? 1 : 0) ? -1 : 0);
-        let compare = (a, b) => (a.english_name.charCodeAt(0) > b.english_name.charCodeAt(0)) ? 1 : ((b.english_name.charCodeAt(0) > a.english_name.charCodeAt(0)) ? -1 : 0);
-        function renderRequests() {
-            document.querySelectorAll('.row-tagging').forEach(el => {
-                deleteRow(el.getAttribute("number"))
-            });
-            filenameBox.classList.add("hidden");
-            noRowTextBox.classList.add("hidden");
-            footer.classList.add("hidden")
-            let approved = 0, rejected = 0, pending = 0
-            document.querySelectorAll(".request-row-visible").forEach(el => {
-                el.remove()
-            });
-            requests.sort(compare2)
-            requests.forEach(el => {
-                let keys = Object.keys(el);
-                keys.forEach(key => {
-                    if (!el[key]) {
-                        el[key] = "N/A"
-                    }
-                    if (el[key] && el[key].toString().includes("--")) {
-                        el[key] = "N/A"
-                    }
-                })
-                let newRow = requestRowDefault.cloneNode(true);
-                newRow.classList.add('request-row-visible')
-                let approveButton = newRow.querySelector('.approve-request-button');
-                let rejectButton = newRow.querySelector('.reject-request-button');
-                ground.appendChild(newRow)
-                newRow.classList.remove('hidden');
-                newRow.setAttribute('row-id', el.id)
-                approveButton.setAttribute('row-id', el.id);
-                rejectButton.setAttribute('row-id', el.id);
-                newRow.querySelector('.request-owner').innerHTML = `Request By: ${el.owner}`;
-                newRow.querySelector('.request-email').innerHTML = `Email: ${el.email}`;
-                newRow.querySelector('.request-type').innerHTML = `Request Type: ${el.type}`;
-                newRow.querySelector('.request-name').innerHTML = `Tag Name: ${el.name}`;
-                newRow.querySelector('.request-category').innerHTML = `Parent Category: ${el.catname}`;
-                newRow.querySelector('.request-subject').innerHTML = `Parent Subject: ${el.subname}`;
-                newRow.querySelector('.request-chapter').innerHTML = `Parent Chapter: ${el.chname}`;
-                newRow.querySelector('.request-topic').innerHTML = `Parent Topic: ${el.topicname}`;
-                if (el.status == "approved") {
-                    approved++;
-                    approveButton.innerHTML = `Approved`;
-                    rejectButton.remove();
-                    approveButton.classList.add('request-approved');
-                    newRow.classList.add('acted')
-                } else if (el.status == "rejected") {
-                    rejected++
-                    rejectButton.innerHTML = `rejected`;
-                    approveButton.remove();
-                    rejectButton.classList.add('request-rejected');
-                    newRow.classList.add('acted')
-
-                } else {
-                    pending++;
-                }
-                document.querySelector(".request-count").classList.remove('hidden')
-                document.querySelector(".request-count").innerHTML = `<span class="request-count-span approved">Approved: ${approved}</span><span class="request-count-span rejected">Rejected: ${rejected}</span><span class="request-count-span pending">Pending: ${pending}</span>`
-            })
-        }
-        function actRequest(el, status) {
-            let requestId = el.getAttribute('row-id');
-            el.innerHTML = `please wait...`
-            fetch(`${backendBaseURL}/qbgtags/actonrequest`, {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify({
-                    requestId, status
-                })
-            }).then(res => {
-                res.json().then(json => {
-                    fetchRequests()
-                })
-            })
-        }
-        function logout() {
-            window.location.reload()
-        }
-        const fileNameInactive = document.querySelector("#filename-inactive");
-        const fileNameActive = document.querySelector("#filename-active");
-        let fileNameSaved = localStorage.getItem('filename') || "Untitled Tag Sheet";
-        if (fileNameSaved.length > 30) {
-            fileNameSaved = fileNameSaved.substring(0, 30) + "..."
-        }
-        fileNameInactive.innerHTML = `${fileNameSaved}<span class="filename-extension">.XLSX</span>`;
-        function activeFileName(event) {
-            event.stopPropagation()
-            let filename = fileNameInactive.innerText.replace(".XLSX", "");
-            fileNameInactive.classList.add("hidden");
-            fileNameActive.value = filename;
-            fileNameActive.classList.remove("hidden");
-        }
-        fileNameActive.addEventListener('click', (event) => {
-            event.stopPropagation()
-        })
-        document.body.addEventListener('click', () => {
-
-            let filename = fileNameActive.value;
-            localStorage.setItem('filename', filename)
-            if (filename.length > 30) {
-                filename = filename.substring(0, 30) + "..."
-            } else if (filename.length == 0) {
-                return;
-            }
-            fileNameInactive.innerHTML = `${filename}<span class="filename-extension">.XLSX</span>`;
-            fileNameActive.classList.add("hidden");
-            fileNameInactive.classList.remove("hidden");
-        })
-
-        function fileNameChange(el) {
-            if (el.value.length == 0) {
-                exportButton.classList.add("button-disabled");
-                exportButtonSection.classList.add("button-disabled");
-                clearAllButtonSection.classList.add("button-disabled");
-                el.style.borderBottom = '2px solid red';
-                return;
-            }
-            if (rows > 0) {
-                exportButton.classList.remove("button-disabled");
-                exportButtonSection.classList.remove("button-disabled");
-                clearAllButtonSection.classList.remove("button-disabled");
-            }
+        }, 10000);
+    }
+    function onInputAddRow(el) {
+        if (!parseInt(el.value) || parseInt(el.value) <= 0) {
+            showFooterError(`Oops... please enter a valid number.`);
+            el.style.borderBottom = '2px solid red';
+        } else if (parseInt(el.value) + rows > 500) {
+            showFooterError(`Maximum 500 rows allowed for smooth performance.`);
+            el.style.borderBottom = '2px solid red';
+        } else {
+            errorTextFooter.classList.add("hidden");
             el.style.borderBottom = '2px solid var(--envcolor)';
         }
-        let undoHistory = [];
-        let undoTime = 60;
-        let undoActive = 0;
-        let undoInterval;
-        function clearAll(el) {
-            if (undoActive == 1) {
-                return;
-            }
-            undoHistory = [];
-            let rows = document.querySelectorAll(".row.row-tagging");
-            let count = rows.length;
-            rows.forEach(row => {
-                let rowData = [];
-                row.querySelectorAll('select').forEach(select => {
-                    let val = select.selectedOptions[0].value;
-                    rowData.push(val)
-                });
-                undoHistory.push(rowData)
-            });
-            rows.forEach(row => {
-                deleteRow(row.getAttribute("number"))
-            });
-            document.querySelector(".clear-all-section").classList.remove("button-disabled");
-            document.querySelector(".clear-all-button").removeAttribute("onclick");
-            el.innerHTML = `Cleared ${count} ${count == 1 ? "Row" : "Rows"} <span class="footer-button undo-button" onclick="undoLastClear(this)">Undo(${undoTime})</span>`;
-            el.classList.remove("footer-button");
-            document.querySelector(".close-undo").classList.remove("hidden");
-            undoActive = 1;
-            undoInterval = setInterval(() => {
-                undoTime--;
-                document.querySelector(".undo-button").innerHTML = `Undo(${undoTime})`;
-                if (undoTime == 0) {
-                    el.innerHTML = `Clear All`
-                    el.classList.add("footer-button");
-                    closeUndo()
-                }
-            }, 1000);
+    }
+    function makeid(length) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        let counter = 0;
+        while (counter < length) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            counter += 1;
         }
-        function undoLastClear(el) {
-            document.querySelectorAll(".row.row-tagging").forEach(row => {
-                deleteRow(row.getAttribute("number"))
-            });
-            undoHistory.forEach(row => {
-                addrow(row)
-            });
-            el.scrollIntoView({ behavior: "smooth" })
-            setTimeout(() => {
-                closeUndo();
+        return result;
+    }
 
-            }, 100);
-        }
-        function closeUndo() {
-            undoActive = 0;
-            undoTime = 60;
-            if (rows == 0) {
-                document.querySelector(".clear-all-section").classList.add("button-disabled")
-            }
-            document.querySelector(".close-undo").classList.add("hidden");
-            document.querySelector(".clear-all-button").innerHTML = `Clear All`
-            document.querySelector(".clear-all-button").classList.add("footer-button");
-            document.querySelector(".clear-all-button").setAttribute("onclick", "clearAll(this)");
-
-            clearInterval(undoInterval);
-        }
-        function showFooterError(text) {
-            errorTextFooter.classList.remove("hidden");
-            errorTextFooter.innerHTML = text;
-            let id = makeid(10);
-            errorTextFooter.setAttribute('uid', id)
-            setTimeout(() => {
-                if (errorTextFooter.getAttribute('uid') == id) {
-                    errorTextFooter.classList.add("hidden");
-                }
-            }, 10000);
-        }
-        function onInputAddRow(el) {
-            if (!parseInt(el.value) || parseInt(el.value) <= 0) {
-                showFooterError(`Oops... please enter a valid number.`);
-                el.style.borderBottom = '2px solid red';
-            } else if (parseInt(el.value) + rows > 500) {
-                showFooterError(`Maximum 500 rows allowed for smooth performance.`);
-                el.style.borderBottom = '2px solid red';
-            } else {
-                errorTextFooter.classList.add("hidden");
-                el.style.borderBottom = '2px solid var(--envcolor)';
-            }
-        }
-        function makeid(length) {
-            let result = '';
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            const charactersLength = characters.length;
-            let counter = 0;
-            while (counter < length) {
-                result += characters.charAt(Math.floor(Math.random() * charactersLength));
-                counter += 1;
-            }
-            return result;
-        }
-
-        const menuBar = document.querySelector(".menu-bar");
-        const drawer = document.querySelector(".drawer")
-        function menuBarClicked(el) {
-            el.classList.toggle('rotate-90');
-            drawer.classList.toggle('close')
-        }
-        function difficultySwitchFn(el) {
-            if (!el.checked) {
-                localStorage.setItem('difficulty', 0);
-                refreshWindow(300)
-                return;
-            }
-            localStorage.setItem('difficulty', 1);
+    const menuBar = document.querySelector(".menu-bar");
+    const drawer = document.querySelector(".drawer")
+    function menuBarClicked(el) {
+        el.classList.toggle('rotate-90');
+        drawer.classList.toggle('close')
+    }
+    function difficultySwitchFn(el) {
+        if (!el.checked) {
+            localStorage.setItem('difficulty', 0);
             refreshWindow(300)
+            return;
+        }
+        localStorage.setItem('difficulty', 1);
+        refreshWindow(300)
 
 
-        }
-        let difficultyInclude = localStorage.getItem('difficulty');
-        if (difficultyInclude == 0) {
-            difficultySwitch.checked = false
-            document.querySelector(".diff-select-container").remove()
-        } else {
-            difficultySwitch.checked = true
+    }
+    let difficultyInclude = localStorage.getItem('difficulty');
+    if (difficultyInclude == 0) {
+        difficultySwitch.checked = false
+        document.querySelector(".diff-select-container").remove()
+    } else {
+        difficultySwitch.checked = true
 
-        }
-        function refreshWindow(delay) {
-            setTimeout(() => {
-                window.location.reload()
-            }, delay);
-        }
-        function includeTagNameFn(el) {
-            localStorage.setItem('include-tag-name', el.checked)
-        }
-        function openHistoryWindow() {
-            overlay.classList.remove("hidden")
-            document.querySelector('.history-window').classList.remove('hidden');
-            renderHistory()
-        }
-        function renderHistory() {
-            const historyCollectionEl = document.querySelector('.history-collection')
-            const savedHistory = JSON.parse(localStorage.getItem('export-history') || JSON.stringify([]));
-            let html = savedHistory.length > 0 ? '' : '<span>Your exported sheets will be available for viewing in this section.</span>'
-            savedHistory.forEach(history => {
-                const name = history.name;
-                const data = history.data;
-                const uid = history.uid;
-                html += `<div class="history-row">
+    }
+    function refreshWindow(delay) {
+        setTimeout(() => {
+            window.location.reload()
+        }, delay);
+    }
+    function includeTagNameFn(el) {
+        localStorage.setItem('include-tag-name', el.checked)
+    }
+    function openHistoryWindow() {
+        overlay.classList.remove("hidden")
+        document.querySelector('.history-window').classList.remove('hidden');
+        renderHistory()
+    }
+    function renderHistory() {
+        const historyCollectionEl = document.querySelector('.history-collection')
+        const savedHistory = JSON.parse(localStorage.getItem('export-history') || JSON.stringify([]));
+        let html = savedHistory.length > 0 ? '' : '<span>Your exported sheets will be available for viewing in this section.</span>'
+        savedHistory.forEach(history => {
+            const name = history.name;
+            const data = history.data;
+            const uid = history.uid;
+            html += `<div class="history-row">
                     <span class="exported-excel-name">${name}</span>
                     <button class="export-history-excel-button" onclick="exportHistoryExcel('${uid}','${name}')">Export</button>
                 </div>`
-            });
-            historyCollectionEl.innerHTML = html;
-        }
-        function generateRandomId() {
-            const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-            let id = '';
+        });
+        historyCollectionEl.innerHTML = html;
+    }
+    function generateRandomId() {
+        const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let id = '';
 
-            for (let i = 0; i < 25; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                id += characters[randomIndex];
-            }
-
-            return id;
-        }
-        function exportHistoryExcel(uid, name) {
-            console.log(uid)
-            console.log(name)
-            const savedHistory = JSON.parse(localStorage.getItem('export-history'));
-            if (!savedHistory) { return; }
-
-            const historyData = savedHistory.filter(ele => ele.uid == uid)
-            console.log(historyData)
-
-            var workbook = XLSX.utils.book_new(),
-                worksheet = XLSX.utils.aoa_to_sheet(historyData[0].data);
-            workbook.SheetNames.push("Sheet1");
-            workbook.Sheets["Sheet1"] = worksheet;
-            XLSX.writeFile(workbook, name + ".xlsx");
+        for (let i = 0; i < 25; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            id += characters[randomIndex];
         }
 
-        function closeHistoryWindow() {
-            overlay.classList.add("hidden")
-            document.querySelector('.history-window').classList.add('hidden');
-        }
-        // function copyBelow(element, selectClass) {
-        //     var rowElement = element.closest('.row');
-        //     console.log(rowElement)
-        //     var rowNumber = rowElement.getAttribute('number');
-        //     var selectElement = rowElement.querySelector('.' + selectClass);
-        //     var selectedValue = selectElement.innerHTML;
+        return id;
+    }
+    function exportHistoryExcel(uid, name) {
+        console.log(uid)
+        console.log(name)
+        const savedHistory = JSON.parse(localStorage.getItem('export-history'));
+        if (!savedHistory) { return; }
 
-        //     var rowsBelow = Array.from(rowElement.parentElement.querySelectorAll('.row.row-tagging'))
-        //         .slice(rowNumber);
+        const historyData = savedHistory.filter(ele => ele.uid == uid)
+        console.log(historyData)
 
-        //     for (var i = 0; i < rowsBelow.length; i++) {
-        //         var rowBelow = rowsBelow[i];
-        //         var selectBelow = rowBelow.querySelector('.' + selectClass);
-        //         selectBelow.innerHTML = selectedValue;
-        //         selectBelow.value = selectElement.value;
-        //         selectBelow.dispatchEvent(new Event('change'));
-        //     }
-        // }
-        function copyBelow(element, selectClass) {
-            var rowElement = element.closest('.row');
-            var rowNumber = rowElement.getAttribute('number');
-            var selectElement = rowElement.querySelector('.' + selectClass);
-            var selectedValue = selectElement.innerHTML;
+        var workbook = XLSX.utils.book_new(),
+            worksheet = XLSX.utils.aoa_to_sheet(historyData[0].data);
+        workbook.SheetNames.push("Sheet1");
+        workbook.Sheets["Sheet1"] = worksheet;
+        XLSX.writeFile(workbook, name + ".xlsx");
+    }
 
-            var selectElements = rowElement.querySelectorAll('select');
-            var selectValues = Array.from(selectElements).map(function (select) {
-                return select.value;
-            });
+    function closeHistoryWindow() {
+        overlay.classList.add("hidden")
+        document.querySelector('.history-window').classList.add('hidden');
+    }
+    // function copyBelow(element, selectClass) {
+    //     var rowElement = element.closest('.row');
+    //     console.log(rowElement)
+    //     var rowNumber = rowElement.getAttribute('number');
+    //     var selectElement = rowElement.querySelector('.' + selectClass);
+    //     var selectedValue = selectElement.innerHTML;
 
-            var rowsBelow = Array.from(rowElement.parentElement.querySelectorAll('.row.row-tagging'))
-                .slice(rowNumber);
+    //     var rowsBelow = Array.from(rowElement.parentElement.querySelectorAll('.row.row-tagging'))
+    //         .slice(rowNumber);
 
-            for (var i = 0; i < rowsBelow.length; i++) {
-                var rowBelow = rowsBelow[i];
-                var selectBelow = rowBelow.querySelector('.' + selectClass);
+    //     for (var i = 0; i < rowsBelow.length; i++) {
+    //         var rowBelow = rowsBelow[i];
+    //         var selectBelow = rowBelow.querySelector('.' + selectClass);
+    //         selectBelow.innerHTML = selectedValue;
+    //         selectBelow.value = selectElement.value;
+    //         selectBelow.dispatchEvent(new Event('change'));
+    //     }
+    // }
+    function copyBelow(element, selectClass) {
+        var rowElement = element.closest('.row');
+        var rowNumber = rowElement.getAttribute('number');
+        var selectElement = rowElement.querySelector('.' + selectClass);
+        var selectedValue = selectElement.innerHTML;
 
-                for (var j = 0; j < selectElements.length; j++) {
-                    selectBelow = rowBelow.querySelector('.' + selectElements[j].classList[0]);
-                    selectBelow.innerHTML = selectElements[j].innerHTML;
-                    selectBelow.value = selectValues[j];
-                    selectBelow.dispatchEvent(new Event('change'));
+        var selectElements = rowElement.querySelectorAll('select');
+        var selectValues = Array.from(selectElements).map(function (select) {
+            return select.value;
+        });
 
-                    if (selectElements[j] === selectElement) {
-                        break; // Stop copying if reaching the current dropdown
-                    }
+        var rowsBelow = Array.from(rowElement.parentElement.querySelectorAll('.row.row-tagging'))
+            .slice(rowNumber);
+
+        for (var i = 0; i < rowsBelow.length; i++) {
+            var rowBelow = rowsBelow[i];
+            var selectBelow = rowBelow.querySelector('.' + selectClass);
+
+            for (var j = 0; j < selectElements.length; j++) {
+                selectBelow = rowBelow.querySelector('.' + selectElements[j].classList[0]);
+                selectBelow.innerHTML = selectElements[j].innerHTML;
+                selectBelow.value = selectValues[j];
+                selectBelow.dispatchEvent(new Event('change'));
+
+                if (selectElements[j] === selectElement) {
+                    break; // Stop copying if reaching the current dropdown
                 }
             }
         }
+    }
 
 
 </script>
